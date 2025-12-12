@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Kalkulator Gizi</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (untuk memproses JSX) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Merriweather', 'serif'],
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.7s ease-out forwards',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        .animate-in {
+            animation: fadeIn 0.7s ease-out forwards;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            .print-container { box-shadow: none; border: none; margin: 0; padding: 0; }
+        }
+    </style>
+</head>
+<body class="bg-neutral-100">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- ICONS (SVG Components) ---
+        const IconWrapper = ({ children, className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {children}
+            </svg>
+        );
+
+        const Calculator = ({ className }) => (
+            <IconWrapper className={className}>
+                <rect width="16" height="20" x="4" y="2" rx="2" /><line x1="8" x2="16" y1="6" y2="6" /><line x1="16" x2="16" y1="14" y2="18" /><path d="M16 10h.01" /><path d="M12 10h.01" /><path d="M8 10h.01" /><path d="M12 14h.01" /><path d="M8 14h.01" /><path d="M12 18h.01" /><path d="M8 18h.01" />
+            </IconWrapper>
+        );
+        const FileText = ({ className }) => (
+            <IconWrapper className={className}>
+                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>
+            </IconWrapper>
+        );
+        const ChevronRight = ({ className }) => (
+            <IconWrapper className={className}>
+                <path d="m9 18 6-6-6-6"/>
+            </IconWrapper>
+        );
+        const Info = ({ className }) => (
+            <IconWrapper className={className}>
+                <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8"/>
+            </IconWrapper>
+        );
+
+        // --- SUB-COMPONENTS UI ---
+
+        const Section = ({ title, children, rightElement }) => (
+            <div className="mb-8">
+                <div className="flex justify-between items-baseline mb-4 border-b border-emerald-500/30 pb-2">
+                    <h3 className="font-bold text-xl text-neutral-900 underline decoration-emerald-500 decoration-2 underline-offset-4">{title}</h3>
+                    {rightElement}
+                </div>
+                <div className="pl-2">
+                    {children}
+                </div>
+            </div>
+        );
+
+        const MathLine = ({ label, formula, indent }) => (
+            <div className={`flex gap-3 font-mono text-lg mb-1 ${indent ? 'pl-8' : ''} text-neutral-700`}>
+                {label && <span className="min-w-[40px] font-semibold whitespace-nowrap">{label}</span>}
+                <span>{label ? '=' : indent ? '=' : ''} {formula}</span>
+            </div>
+        );
+
+        const ResultLine = ({ value, unit, indent }) => (
+            <div className={`flex gap-3 font-mono text-lg mb-2 mt-1 ${indent ? 'pl-8' : ''}`}>
+                <span className="font-bold">= </span>
+                <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold border border-emerald-200 shadow-sm inline-block">
+                {value} {unit}
+                </span>
+            </div>
+        );
+
+        const Label = ({ text }) => (
+            <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">{text}</label>
+        );
+
+        const InputGroup = ({ label, suffix, value, onChange }) => (
+            <div>
+                <Label text={label} />
+                <div className="relative group">
+                <input 
+                    type="number" 
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-neutral-300 bg-neutral-50 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all font-medium text-neutral-800 text-sm"
+                    placeholder="0"
+                />
+                <span className="absolute right-3 top-2.5 text-xs font-bold text-neutral-400 group-focus-within:text-emerald-500">{suffix}</span>
+                </div>
+            </div>
+        );
+
+        const SelectGroup = ({ label, value, onChange, options }) => (
+            <div>
+                <Label text={label} />
+                <div className="relative">
+                <select 
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="w-full appearance-none pl-3 pr-8 py-2.5 rounded-lg border border-neutral-300 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all font-medium text-neutral-700 text-sm"
+                >
+                    {options.map((o) => (
+                    <option key={o.val} value={o.val}>{o.txt}</option>
+                    ))}
+                </select>
+                <div className="absolute right-3 top-3 pointer-events-none">
+                    <ChevronRight className="w-4 h-4 text-neutral-400 rotate-90" />
+                </div>
+                </div>
+            </div>
+        );
+
+        const GenderButton = ({ active, onClick, label }) => (
+            <button 
+                onClick={onClick}
+                className={`py-2.5 px-4 rounded-lg text-sm font-semibold transition-all border ${active ? 'bg-neutral-800 text-white border-neutral-800 shadow-md' : 'bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-50'}`}
+            >
+                {label}
+            </button>
+        );
+
+        // --- MAIN APP COMPONENT ---
+
+        const NutritionPaperApp = () => {
+            const [input, setInput] = useState({
+                age: '',
+                gender: 'female',
+                height: '',
+                weight: '',
+                bbiVersion: 'v1',
+                dietType: 'rendah_lemak'
+            });
+
+            const [result, setResult] = useState(null);
+
+            const DIET_TYPES = {
+                rendah_lemak: {
+                label: "Diet Rendah Lemak & Rendah Kalori",
+                activityPercent: 20,
+                macros: { carbo: 65, protein: 15, fat: 20 },
+                distribution: [25, 10, 30, 10, 25]
+                },
+                dm: {
+                label: "Diet Diabetes Melitus",
+                activityPercent: 20,
+                macros: { carbo: 50, protein: 30, fat: 20 },
+                distribution: [25, 10, 30, 10, 25]
+                },
+                rendah_purin: {
+                label: "Diet Rendah Purin",
+                activityPercent: 10,
+                macros: { carbo: 65, protein: 15, fat: 20 },
+                distribution: [25, 10, 30, 10, 25]
+                },
+                gaky: {
+                label: "Diet GAKY",
+                activityPercent: 20,
+                macros: { carbo: 65, protein: 15, fat: 20 },
+                distribution: [25, 10, 30, 10, 25]
+                }
+            };
+
+            // UPDATE: "Snack" -> "Selingan"
+            const MEAL_NAMES = ["Makan Pagi", "Selingan Pagi", "Makan Siang", "Selingan Sore", "Makan Malam"];
+
+            const fmt = (num, decimals = 1) => {
+                if (isNaN(num) || num === Infinity) return "0";
+                return num.toLocaleString('id-ID', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+            };
+
+            useEffect(() => {
+                if (!input.age || !input.height || !input.weight) {
+                setResult(null);
+                return;
+                }
+
+                const BB = parseFloat(input.weight);
+                const TB = parseFloat(input.height);
+                const U = parseInt(input.age);
+                const TB_M = TB / 100;
+                const diet = DIET_TYPES[input.dietType];
+
+                // 1. IMT
+                const imtVal = BB / (TB_M * TB_M);
+                
+                // 2. BBI
+                let bbiVal = 0;
+                let bbiSteps = [];
+                
+                if (input.bbiVersion === 'v1') {
+                bbiVal = 0.9 * (TB - 100);
+                bbiSteps = [
+                    `BBI = 90% x (TB - 100)`,
+                    `= 90% x (${TB} - 100)`,
+                    `= 0,9 x ${TB - 100}`
+                ];
+                } else {
+                const base = TB - 100;
+                const reduction = 0.1 * base;
+                bbiVal = base - reduction;
+                bbiSteps = [
+                    `BBI = (TB - 100) - 10%(TB - 100)`,
+                    `= (${TB} - 100) - 10%(${TB} - 100)`,
+                    `= ${base} - ${fmt(reduction)}`
+                ];
+                }
+
+                // 3. KEB
+                const kebFactor = input.gender === 'male' ? 30 : 25;
+                const kebVal = kebFactor * bbiVal;
+
+                // 4. Koreksi Usia
+                let agePct = 0;
+                if (U >= 40 && U <= 59) agePct = 5;
+                else if (U >= 60 && U <= 69) agePct = 10;
+                else if (U >= 70) agePct = 20;
+                const ageVal = (agePct / 100) * kebVal;
+
+                // 5. Aktivitas
+                const actPct = diet.activityPercent;
+                const actVal = (actPct / 100) * kebVal;
+
+                // 6. KET
+                const ketVal = kebVal + actVal - ageVal;
+                const ketMin = ketVal - (0.1 * ketVal);
+                const ketMax = ketVal + (0.1 * ketVal);
+
+                // 7. Macros
+                const macros = [
+                { key: 'carbo', label: 'Karbohidrat', div: 4 },
+                { key: 'protein', label: 'Protein', div: 4 },
+                { key: 'fat', label: 'Lemak', div: 9 }
+                ].map(m => {
+                const pct = diet.macros[m.key];
+                const calTotal = (pct / 100) * ketVal; 
+                const gram = calTotal / m.div;
+                const maxGram = gram + (0.1 * gram);
+                const minGram = gram - (0.1 * gram);
+                return { ...m, pct, calTotal, gram, maxGram, minGram };
+                });
+
+                // 8. Meal Plan
+                const mealPlan = diet.distribution.map((pct, idx) => ({
+                name: MEAL_NAMES[idx],
+                pct,
+                cal: (pct / 100) * ketVal
+                }));
+
+                setResult({
+                im: { val: imtVal, bb: BB, tbm: TB_M },
+                bbi: { val: bbiVal, steps: bbiSteps },
+                keb: { val: kebVal, factor: kebFactor },
+                ket: { val: ketVal, actPct, actVal, agePct, ageVal, min: ketMin, max: ketMax },
+                macros,
+                mealPlan
+                });
+            }, [input]);
+
+            return (
+                <div className="min-h-screen bg-neutral-100 font-sans text-neutral-800 p-4 lg:p-8 flex justify-center">
+                
+                <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8 print:block">
+                    
+                    {/* === INPUT PANEL === */}
+                    <div className="lg:col-span-4 space-y-6 no-print">
+                    <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 sticky top-8 overflow-hidden">
+                        <div className="bg-neutral-800 text-white p-5 flex items-center gap-3">
+                        <Calculator className="w-5 h-5 text-emerald-400" />
+                        <h2 className="font-semibold tracking-wide">Input Data Pasien</h2>
+                        </div>
+                        
+                        <div className="p-6 space-y-6">
+                        <div>
+                            <Label text="Jenis Kelamin" />
+                            <div className="grid grid-cols-2 gap-3">
+                            <GenderButton 
+                                active={input.gender === 'male'} 
+                                onClick={() => setInput({...input, gender: 'male'})} 
+                                label="Laki-laki" 
+                            />
+                            <GenderButton 
+                                active={input.gender === 'female'} 
+                                onClick={() => setInput({...input, gender: 'female'})} 
+                                label="Perempuan" 
+                            />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <InputGroup 
+                            label="Usia" 
+                            suffix="Thn" 
+                            value={input.age} 
+                            onChange={v => setInput({...input, age: v})} 
+                            />
+                            <InputGroup 
+                            label="Berat" 
+                            suffix="kg" 
+                            value={input.weight} 
+                            onChange={v => setInput({...input, weight: v})} 
+                            />
+                        </div>
+
+                        <InputGroup 
+                            label="Tinggi Badan" 
+                            suffix="cm" 
+                            value={input.height} 
+                            onChange={v => setInput({...input, height: v})} 
+                        />
+
+                        <hr className="border-neutral-100" />
+
+                        <div className="space-y-4">
+                            {/* UPDATE: Pilihan Rumus BBI dipindahkan ke Paper Output */}
+                            
+                            <SelectGroup 
+                            label="Jenis Diet"
+                            value={input.dietType}
+                            onChange={v => setInput({...input, dietType: v})}
+                            options={Object.entries(DIET_TYPES).map(([k,v]) => ({val: k, txt: v.label}))}
+                            />
+                        </div>
+
+                        <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 text-xs text-emerald-800 leading-relaxed">
+                            <div className="flex items-center gap-2 mb-2 font-bold">
+                                <Info className="w-4 h-4" />
+                                <span>Tips</span>
+                            </div>
+                            Pilihan Rumus BBI sekarang dapat diubah langsung di bagian "Berat Badan Ideal" pada lembar hasil.
+                        </div>
+
+                        </div>
+                    </div>
+                    </div>
+
+                    {/* === OUTPUT PANEL === */}
+                    <div className="lg:col-span-8">
+                    <div className="bg-white min-h-[800px] shadow-lg border border-neutral-300 relative rounded-sm mx-auto max-w-[800px] print-container">
+                        
+                        <div className="border-b-4 border-emerald-700 p-8 pb-4">
+                        <div className="flex justify-between items-end">
+                            <div>
+                            <h1 className="text-3xl font-serif font-bold text-neutral-900 mb-1">HASIL PERHITUNGAN GIZI</h1>
+                            <p className="font-serif text-emerald-700 italic">Rincian Penyelesaian Langkah Demi Langkah</p>
+                            </div>
+                            <FileText className="w-10 h-10 text-neutral-200" />
+                        </div>
+                        </div>
+
+                        <div className="p-8 md:p-10 font-serif text-lg leading-relaxed text-neutral-800">
+                        
+                        {!result ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-neutral-300">
+                            <div className="text-4xl mb-4 font-mono">...</div>
+                            <p className="font-sans text-sm uppercase tracking-widest">Menunggu Data Input</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-8 animate-in fade-in duration-700">
+                            
+                            <div className="mb-6 pb-4 border-b border-dashed border-neutral-300">
+                                <table className="w-full text-sm font-sans text-neutral-600">
+                                <tbody>
+                                    <tr>
+                                    <td className="w-32 py-1">Diagnosa Klinis</td>
+                                    <td className="py-1 font-bold text-neutral-900">: Pasien {DIET_TYPES[input.dietType].label}</td>
+                                    </tr>
+                                    <tr>
+                                    <td className="w-32 py-1">Data Fisik</td>
+                                    <td className="py-1">: {input.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, {input.age} Thn, TB {input.height} cm, BB {input.weight} kg</td>
+                                    </tr>
+                                </tbody>
+                                </table>
+                            </div>
+
+                            <Section title="1) Indeks Massa Tubuh (IMT)">
+                                <MathLine label="IMT" formula="BB (kg) / TB (m)²" />
+                                <MathLine indent formula={`${fmt(result.im.bb)} / (${fmt(result.im.tbm, 2)})²`} />
+                                <ResultLine indent value={fmt(result.im.val, 1)} unit="kg/m²" />
+                            </Section>
+
+                            {/* UPDATE: Selector BBI dipindah ke sini */}
+                            <Section 
+                                title="2) Berat Badan Ideal (BBI)"
+                                rightElement={
+                                    <select 
+                                        className="text-xs font-sans border border-neutral-300 rounded px-2 py-1 bg-white hover:border-emerald-500 cursor-pointer no-print"
+                                        value={input.bbiVersion}
+                                        onChange={e => setInput({...input, bbiVersion: e.target.value})}
+                                    >
+                                        <option value="v1">Rumus 90% (Broca)</option>
+                                        <option value="v2">Rumus Modifikasi</option>
+                                    </select>
+                                }
+                            >
+                                {result.bbi.steps.map((step, i) => (
+                                <MathLine key={i} formula={step} indent={i > 0} label={i === 0 ? "BBI" : ""} />
+                                ))}
+                                <ResultLine indent value={fmt(result.bbi.val, 1)} unit="kg" />
+                            </Section>
+
+                            <Section title="3) Kebutuhan Energi Basal (KEB)">
+                                <MathLine label="KEB" formula={`${result.keb.factor} kkal x BBI`} />
+                                <MathLine indent formula={`${result.keb.factor} x ${fmt(result.bbi.val, 1)}`} />
+                                <ResultLine indent value={fmt(result.keb.val, 1)} unit="kkal" />
+                            </Section>
+
+                            <Section title="4) Kebutuhan Energi Total (KET)">
+                                {/* UPDATE: Rumus KET sesuai permintaan spesifik */}
+                                <MathLine label="-KET" formula="KEB + % KEB aktivitas - % KEB faktor koreksi" />
+                                <MathLine indent formula={`${fmt(result.keb.val, 1)} + (${result.ket.actPct}% x ${fmt(result.keb.val, 1)}) - (${result.ket.agePct}% x ${fmt(result.keb.val, 1)})`} />
+                                <MathLine indent formula={`${fmt(result.keb.val, 1)} + ${fmt(result.ket.actVal, 1)} - ${fmt(result.ket.ageVal, 1)}`} />
+                                <ResultLine indent value={fmt(result.ket.val, 2)} unit="kkal" />
+
+                                <div className="mt-4 pl-4 border-l-2 border-emerald-100">
+                                <div className="font-bold text-neutral-900 mb-1 font-sans text-sm uppercase tracking-wider">Batas Adekuat</div>
+                                <MathLine label="KET (+/-)" formula="(10% x KET)" />
+                                <div className="font-mono text-neutral-700 mt-1 pl-6">
+                                    = {fmt(result.ket.val, 2)} + {fmt(result.ket.val * 0.1, 2)} = <span className="font-bold text-emerald-700 bg-emerald-50 px-1">{fmt(result.ket.max, 2)} kkal (Max)</span>
+                                </div>
+                                <div className="font-mono text-neutral-700 mt-1 pl-6">
+                                    = {fmt(result.ket.val, 2)} - {fmt(result.ket.val * 0.1, 2)} = <span className="font-bold text-emerald-700 bg-emerald-50 px-1">{fmt(result.ket.min, 2)} kkal (Min)</span>
+                                </div>
+                                </div>
+                            </Section>
+
+                            <Section title="5) Makronutrien">
+                                <div className="space-y-6">
+                                {result.macros.map((m) => (
+                                    <div key={m.key}>
+                                    <div className="font-bold text-neutral-800 mb-1">• {m.label}</div>
+                                    <MathLine indent formula={`${m.pct}% x KET : ${m.div}`} />
+                                    <MathLine indent formula={`${m.pct}% x ${fmt(result.ket.val, 2)} : ${m.div}`} />
+                                    <ResultLine indent value={fmt(m.gram, 1)} unit="gram" />
+                                    
+                                    <div className="mt-2 pl-8 text-sm">
+                                        <div className="text-neutral-500 italic mb-1">Batas Adekuat {m.label} (+/- 10%)</div>
+                                        <div className="font-mono text-neutral-700">
+                                        Max: {fmt(m.gram, 1)} + 10% = <span className="font-bold text-emerald-700">{fmt(m.maxGram, 1)} gr</span>
+                                        </div>
+                                        <div className="font-mono text-neutral-700">
+                                        Min: {fmt(m.gram, 1)} - 10% = <span className="font-bold text-emerald-700">{fmt(m.minGram, 1)} gr</span>
+                                        </div>
+                                    </div>
+                                    </div>
+                                ))}
+                                </div>
+                            </Section>
+
+                            <Section title="6) Planning (Menu Sehari)">
+                                <div className="grid gap-3">
+                                {result.mealPlan.map((meal, idx) => (
+                                    <div key={idx} className="flex flex-col sm:flex-row sm:items-baseline gap-2 pb-2 border-b border-dotted border-neutral-200 last:border-0">
+                                        <div className="w-40 font-bold text-neutral-800 text-sm uppercase tracking-wide">- {meal.name}</div>
+                                        <div className="flex-1 font-mono text-neutral-600">
+                                            {meal.pct}% x {fmt(result.ket.val, 0)} = <span className="font-bold text-emerald-700">{fmt(meal.cal, 1)} kkal</span>
+                                        </div>
+                                    </div>
+                                ))}
+                                </div>
+                            </Section>
+
+                            {/* UPDATE: Penjelasan Faktor Koreksi */}
+                            <div className="mt-8 bg-neutral-50 p-6 border-t-2 border-emerald-500 rounded-b-sm">
+                                <h4 className="font-bold text-sm uppercase tracking-wider text-emerald-800 mb-3 flex items-center gap-2">
+                                    <Info className="w-4 h-4"/> Catatan Faktor Penentu
+                                </h4>
+                                <ul className="text-sm font-sans text-neutral-600 space-y-2 list-disc pl-4">
+                                    <li>
+                                        <strong className="text-neutral-800">Jenis Kelamin:</strong> Menentukan konstanta kalori pada rumus KEB (Pria = 30 kkal/kg BBI, Wanita = 25 kkal/kg BBI).
+                                    </li>
+                                    <li>
+                                        <strong className="text-neutral-800">Usia:</strong> Menentukan persentase faktor koreksi (pengurangan) energi.
+                                        <span className="block text-xs text-neutral-400 mt-1 ml-1">
+                                            (40-59 thn: -5%, 60-69 thn: -10%, ≥70 thn: -20%).
+                                        </span>
+                                    </li>
+                                    <li>
+                                        <strong className="text-neutral-800">Tinggi Badan (TB):</strong> Digunakan sebagai dasar utama perhitungan Berat Badan Ideal (BBI).
+                                    </li>
+                                    <li>
+                                        <strong className="text-neutral-800">Berat Badan (BB):</strong> Digunakan untuk menentukan Indeks Massa Tubuh (IMT) guna mengetahui status gizi awal pasien.
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div className="mt-8 pt-4 border-t border-neutral-200 flex justify-between items-center text-xs font-sans text-neutral-400">
+                                <span>Generated by Gizi Kalkulator</span>
+                                <span>{new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                            </div>
+
+                            </div>
+                        )}
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<NutritionPaperApp />);
+    </script>
+</body>
+</html>
+
+
