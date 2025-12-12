@@ -302,17 +302,20 @@
                 const ageVal = (agePct / 100) * kebVal;
 
                 // 5. Aktivitas 
-                // Jika "Tugas Tambahan", fix 20%. Jika "Hasil Edukasi", gunakan input dropdown.
                 const actPct = input.activitySource === 'tambahan' ? 20 : input.activityPct;
                 const actVal = (actPct / 100) * kebVal;
 
-                // Hitungan KET: Fix Defisit 500
-                const DEFICIT = 500;
+                // Hitungan KET: 
+                // Langkah 1: KET Prelim (Tanpa Defisit)
                 const ketPrelim = kebVal + actVal - ageVal;
-                const ketVal = ketPrelim - DEFICIT; 
                 
-                const ketMin = ketVal - (0.1 * ketVal);
-                const ketMax = ketVal + (0.1 * ketVal);
+                // Langkah 2: KET Final (Dikurangi Defisit 500)
+                const DEFICIT = 500;
+                const ketFinal = ketPrelim - DEFICIT; 
+                
+                // Gunakan ketFinal untuk makro
+                const ketMin = ketFinal - (0.1 * ketFinal);
+                const ketMax = ketFinal + (0.1 * ketFinal);
 
                 const macros = [
                     { key: 'carbo', label: 'Karbohidrat', div: 4 },
@@ -320,7 +323,7 @@
                     { key: 'fat', label: 'Lemak', div: 9 }
                 ].map(m => {
                     const pct = diet.macros[m.key];
-                    const calTotal = (pct / 100) * ketVal; 
+                    const calTotal = (pct / 100) * ketFinal; 
                     const gram = calTotal / m.div;
                     const maxGram = gram + (0.1 * gram);
                     const minGram = gram - (0.1 * gram);
@@ -330,14 +333,18 @@
                 const mealPlan = diet.distribution.map((pct, idx) => ({
                     name: MEAL_NAMES[idx],
                     pct,
-                    cal: (pct / 100) * ketVal
+                    cal: (pct / 100) * ketFinal
                 }));
 
                 setResult({
                     im: { val: imtVal, bb: BB, tbm: TB_M },
                     bbi: { val: bbiVal, steps: bbiSteps },
                     keb: { val: kebVal, factor: kebFactor },
-                    ket: { val: ketVal, actPct, actVal, agePct, ageVal, min: ketMin, max: ketMax, deficit: DEFICIT },
+                    ket: { 
+                        val: ketFinal, 
+                        prelim: ketPrelim, // Simpan nilai sebelum defisit
+                        actPct, actVal, agePct, ageVal, min: ketMin, max: ketMax, deficit: DEFICIT 
+                    },
                     macros,
                     mealPlan
                 });
@@ -571,11 +578,18 @@
                                             </Section>
 
                                             <Section title="4) Kebutuhan Energi Total (KET)" theme={theme}>
-                                                {/* Update: Fixed 500 Deficit Logic Display */}
-                                                <MathLine label="-KET" formula="KEB + % KEB aktivitas - % KEB faktor koreksi - 500 (Defisit)" theme={theme} smallText />
-                                                <MathLine label="" formula={`${fmt(result.keb.val, 1)} + (${result.ket.actPct}% x ${fmt(result.keb.val, 1)}) - (${result.ket.agePct}% x ${fmt(result.keb.val, 1)}) - 500`} theme={theme} smallText />
-                                                <MathLine label="" formula={`${fmt(result.keb.val, 1)} + ${fmt(result.ket.actVal, 1)} - ${fmt(result.ket.ageVal, 1)} - 500`} theme={theme} smallText />
-                                                <MathLine label="" formula={fmt(result.ket.val, 2)} isResult resultUnit="kkal" theme={theme} />
+                                                {/* Step 1: KET Murni (Tanpa Defisit) */}
+                                                <MathLine label="-KET" formula="KEB + % KEB aktivitas - % KEB faktor koreksi" theme={theme} smallText />
+                                                <MathLine label="" formula={`${fmt(result.keb.val, 1)} + (${result.ket.actPct}% x ${fmt(result.keb.val, 1)}) - (${result.ket.agePct}% x ${fmt(result.keb.val, 1)})`} theme={theme} smallText />
+                                                <MathLine label="" formula={`${fmt(result.keb.val, 1)} + ${fmt(result.ket.actVal, 1)} - ${fmt(result.ket.ageVal, 1)}`} theme={theme} smallText />
+                                                <MathLine label="" formula={fmt(result.ket.prelim, 2)} isResult resultUnit="kkal" theme={theme} />
+
+                                                {/* Step 2: Total Energi Akhir (Defisit) */}
+                                                <div className="mt-4 mb-2">
+                                                    <MathLine label="-Total" formula="KET - 500 kkal (Defisit)" theme={theme} smallText />
+                                                    <MathLine label="" formula={`${fmt(result.ket.prelim, 2)} - 500`} theme={theme} smallText />
+                                                    <MathLine label="" formula={fmt(result.ket.val, 2)} isResult resultUnit="kkal" theme={theme} />
+                                                </div>
 
                                                 <div className="mt-4 text-sm pl-0">
                                                     <div className="text-neutral-500 italic mb-1">Batas Adekuat KET (+/- 10%)</div>
@@ -686,3 +700,5 @@
     </script>
 </body>
 </html>
+
+
