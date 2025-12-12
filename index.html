@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Kalkulator Gizi</title>
+    <title>Aplikasi Kalkulator Gizi Modern</title>
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -30,10 +30,15 @@
                         fadeIn: {
                             '0%': { opacity: '0', transform: 'translateY(10px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(100%)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
                         }
                     },
                     animation: {
                         'fade-in': 'fadeIn 0.7s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s ease-out forwards',
                     }
                 }
             }
@@ -42,18 +47,24 @@
     
     <style>
         .animate-in { animation: fadeIn 0.7s ease-out forwards; }
+        /* Hide scrollbar for cleaner UI */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
         @media print {
             .no-print { display: none !important; }
-            body { background: white; }
-            .print-container { box-shadow: none; border: none; margin: 0; padding: 0; }
+            body { background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .print-container { box-shadow: none; border: none; margin: 0; padding: 0; width: 100%; max-width: none; }
+            .bg-emerald-50 { background-color: #ecfdf5 !important; }
+            .text-emerald-800 { color: #065f46 !important; }
         }
     </style>
 </head>
-<body class="bg-neutral-100">
+<body class="bg-neutral-100 text-neutral-800">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
         // --- ICONS ---
         const IconWrapper = ({ children, className }) => (
@@ -69,22 +80,49 @@
         const Ruler = ({ className }) => <IconWrapper className={className}><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></IconWrapper>;
         const Weight = ({ className }) => <IconWrapper className={className}><circle cx="12" cy="5" r="3"/><path d="M6.5 8a2 2 0 0 0-1.905 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.5A2 2 0 0 0 17.48 8Z"/></IconWrapper>;
         const Clock = ({ className }) => <IconWrapper className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconWrapper>;
+        const Settings = ({ className }) => <IconWrapper className={className}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></IconWrapper>;
 
-        // --- COMPONENTS ---
+        // --- THEME CONFIGURATION ---
+        const THEMES = {
+            rendah_lemak: { 
+                name: 'emerald', 
+                bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-800', 
+                accent: 'text-emerald-600', ring: 'focus:ring-emerald-500', 
+                decor: 'decoration-emerald-500', subBg: 'bg-emerald-100', subBorder: 'border-emerald-500',
+                header: 'border-emerald-700', activeRow: 'bg-emerald-100 text-emerald-900 font-bold'
+            },
+            dm: { 
+                name: 'amber', 
+                bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-800', 
+                accent: 'text-amber-600', ring: 'focus:ring-amber-500', 
+                decor: 'decoration-amber-500', subBg: 'bg-amber-100', subBorder: 'border-amber-500',
+                header: 'border-amber-600', activeRow: 'bg-amber-100 text-amber-900 font-bold'
+            },
+            rendah_purin: { 
+                name: 'rose', 
+                bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-800', 
+                accent: 'text-rose-600', ring: 'focus:ring-rose-500', 
+                decor: 'decoration-rose-500', subBg: 'bg-rose-100', subBorder: 'border-rose-500',
+                header: 'border-rose-600', activeRow: 'bg-rose-100 text-rose-900 font-bold'
+            },
+            gaky: { 
+                name: 'sky', 
+                bg: 'bg-sky-50', border: 'border-sky-200', text: 'text-sky-800', 
+                accent: 'text-sky-600', ring: 'focus:ring-sky-500', 
+                decor: 'decoration-sky-500', subBg: 'bg-sky-100', subBorder: 'border-sky-500',
+                header: 'border-sky-600', activeRow: 'bg-sky-100 text-sky-900 font-bold'
+            }
+        };
 
-        // Grid Layout MathLine untuk perataan sempurna
-        const MathLine = ({ label, formula, isResult, resultUnit }) => (
-            <div className="grid grid-cols-[60px_20px_1fr] gap-y-1 font-mono text-lg text-neutral-700 leading-snug">
-                {/* Kolom Label */}
+        // --- SUB-COMPONENTS ---
+
+        const MathLine = ({ label, formula, isResult, resultUnit, theme, smallText }) => (
+            <div className={`grid grid-cols-[60px_20px_1fr] gap-y-1 font-mono ${smallText ? 'text-sm' : 'text-lg'} text-neutral-700 leading-snug`}>
                 <div className="font-semibold whitespace-nowrap">{label || ''}</div>
-                
-                {/* Kolom Sama Dengan */}
                 <div className="text-center">=</div>
-                
-                {/* Kolom Rumus/Nilai */}
                 <div>
                     {isResult ? (
-                         <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold border border-emerald-200 shadow-sm inline-block">
+                         <span className={`${theme.subBg} ${theme.text} px-2 py-0.5 rounded font-bold border ${theme.border} shadow-sm inline-block`}>
                             {formula} {resultUnit}
                         </span>
                     ) : (
@@ -94,10 +132,10 @@
             </div>
         );
 
-        const Section = ({ title, children, rightElement }) => (
+        const Section = ({ title, children, rightElement, theme }) => (
             <div className="mb-8">
-                <div className="flex justify-between items-baseline mb-4 border-b border-emerald-500/30 pb-2">
-                    <h3 className="font-bold text-xl text-neutral-900 underline decoration-emerald-500 decoration-2 underline-offset-4">{title}</h3>
+                <div className={`flex justify-between items-baseline mb-4 border-b ${theme.border} pb-2`}>
+                    <h3 className={`font-bold text-xl text-neutral-900 underline ${theme.decor} decoration-2 underline-offset-4`}>{title}</h3>
                     {rightElement}
                 </div>
                 <div className="pl-2">
@@ -108,7 +146,7 @@
 
         const Label = ({ text }) => <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">{text}</label>;
 
-        const InputGroup = ({ label, suffix, value, onChange }) => (
+        const InputGroup = ({ label, suffix, value, onChange, theme }) => (
             <div>
                 <Label text={label} />
                 <div className="relative group">
@@ -116,32 +154,35 @@
                     type="number" 
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-neutral-300 bg-neutral-50 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all font-medium text-neutral-800 text-sm"
+                    className={`w-full pl-3 pr-10 py-2.5 rounded-lg border border-neutral-300 bg-white focus:bg-white focus:ring-2 outline-none transition-all font-medium text-neutral-800 text-sm ${theme.ring} focus:border-transparent`}
                     placeholder="0"
                 />
-                <span className="absolute right-3 top-2.5 text-xs font-bold text-neutral-400 group-focus-within:text-emerald-500">{suffix}</span>
+                <span className="absolute right-3 top-2.5 text-xs font-bold text-neutral-400">{suffix}</span>
                 </div>
             </div>
         );
 
-        const SelectGroup = ({ label, value, onChange, options }) => (
-            <div>
-                <Label text={label} />
-                <div className="relative">
-                <select 
-                    value={value}
+        const CompactInput = ({ value, onChange, placeholder, suffix }) => (
+            <div className="relative w-full">
+                <input 
+                    type="number" 
+                    value={value} 
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-full appearance-none pl-3 pr-8 py-2.5 rounded-lg border border-neutral-300 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all font-medium text-neutral-700 text-sm"
-                >
-                    {options.map((o) => <option key={o.val} value={o.val}>{o.txt}</option>)}
-                </select>
-                <div className="absolute right-3 top-3 pointer-events-none"><ChevronRight className="w-4 h-4 text-neutral-400 rotate-90" /></div>
-                </div>
+                    className="w-full pl-2 pr-6 py-2 rounded-lg border border-neutral-300 text-xs font-semibold focus:ring-1 focus:ring-emerald-500 outline-none"
+                    placeholder={placeholder}
+                />
+                 <span className="absolute right-2 top-2 text-[10px] text-neutral-400 pointer-events-none">{suffix}</span>
             </div>
         );
 
-        const GenderButton = ({ active, onClick, label }) => (
-            <button onClick={onClick} className={`py-2.5 px-4 rounded-lg text-sm font-semibold transition-all border ${active ? 'bg-neutral-800 text-white border-neutral-800 shadow-md' : 'bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-50'}`}>{label}</button>
+        const TableRow = ({ label, value, isActive, theme }) => (
+            <tr className={`border-b border-neutral-100 last:border-0 text-sm ${isActive ? theme.activeRow : 'text-neutral-600 hover:bg-neutral-50'}`}>
+                <td className="py-2 px-3">{label}</td>
+                <td className="py-2 px-3 text-right font-mono">{value}</td>
+                <td className="py-2 px-3 text-center">
+                    {isActive && <span className="text-[10px] uppercase font-bold tracking-wider">Aktif</span>}
+                </td>
+            </tr>
         );
 
         // --- MAIN APP ---
@@ -156,18 +197,42 @@
                 dietType: 'rendah_lemak'
             });
             const [result, setResult] = useState(null);
+            const [showFloating, setShowFloating] = useState(false);
+            const inputPanelRef = useRef(null);
 
             const DIET_TYPES = {
-                rendah_lemak: { label: "Diet Rendah Lemak & Rendah Kalori", activityPercent: 20, macros: { carbo: 65, protein: 15, fat: 20 }, distribution: [25, 10, 30, 10, 25] },
-                dm: { label: "Diet Diabetes Melitus", activityPercent: 20, macros: { carbo: 50, protein: 30, fat: 20 }, distribution: [25, 10, 30, 10, 25] },
-                rendah_purin: { label: "Diet Rendah Purin", activityPercent: 10, macros: { carbo: 65, protein: 15, fat: 20 }, distribution: [25, 10, 30, 10, 25] },
-                gaky: { label: "Diet GAKY", activityPercent: 20, macros: { carbo: 65, protein: 15, fat: 20 }, distribution: [25, 10, 30, 10, 25] }
+                rendah_lemak: { label: "Diet Rendah Lemak", fullLabel: "Diet Rendah Lemak & Rendah Kalori", activityPercent: 20, macros: { carbo: 65, protein: 15, fat: 20 }, distribution: [25, 10, 30, 10, 25] },
+                dm: { label: "Diet DM", fullLabel: "Diet Diabetes Melitus", activityPercent: 20, macros: { carbo: 50, protein: 30, fat: 20 }, distribution: [25, 10, 30, 10, 25] },
+                rendah_purin: { label: "Diet R. Purin", fullLabel: "Diet Rendah Purin", activityPercent: 10, macros: { carbo: 65, protein: 15, fat: 20 }, distribution: [25, 10, 30, 10, 25] },
+                gaky: { label: "Diet GAKY", fullLabel: "Diet GAKY", activityPercent: 20, macros: { carbo: 65, protein: 15, fat: 20 }, distribution: [25, 10, 30, 10, 25] }
             };
             const MEAL_NAMES = ["Makan Pagi", "Selingan Pagi", "Makan Siang", "Selingan Sore", "Makan Malam"];
             const fmt = (num, decimals = 1) => {
                 if (isNaN(num) || num === Infinity) return "0";
                 return num.toLocaleString('id-ID', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
             };
+
+            const theme = THEMES[input.dietType] || THEMES.rendah_lemak;
+
+            // --- SCROLL DETECTION LOGIC ---
+            useEffect(() => {
+                const observer = new IntersectionObserver(
+                    ([entry]) => {
+                        // Jika input panel terlihat (isIntersecting = true), sembunyikan floating bar
+                        // Jika input panel tidak terlihat (scroll ke bawah), tampilkan floating bar
+                        setShowFloating(!entry.isIntersecting);
+                    },
+                    { threshold: 0.1 } // Trigger saat 10% elemen masuk/keluar viewport
+                );
+
+                if (inputPanelRef.current) {
+                    observer.observe(inputPanelRef.current);
+                }
+
+                return () => {
+                    if (inputPanelRef.current) observer.unobserve(inputPanelRef.current);
+                };
+            }, [inputPanelRef]);
 
             useEffect(() => {
                 if (!input.age || !input.height || !input.weight) { setResult(null); return; }
@@ -181,24 +246,24 @@
                 // 1. IMT
                 const imtVal = BB / (TB_M * TB_M);
                 
-                // 2. BBI (Perbaikan: String formula tidak lagi mengandung "BBI =" agar tidak double)
+                // 2. BBI
                 let bbiVal = 0;
                 let bbiSteps = [];
                 if (input.bbiVersion === 'v1') {
                     bbiVal = 0.9 * (TB - 100);
                     bbiSteps = [
-                        `90% x (TB - 100)`,
-                        `90% x (${TB} - 100)`,
-                        `0,9 x ${TB - 100}`
+                        { label: 'Rumus', val: '90% x (TB - 100)' },
+                        { label: 'Subs', val: `90% x (${TB} - 100)` },
+                        { label: 'Hitung', val: `0,9 x ${TB - 100}` }
                     ];
                 } else {
                     const base = TB - 100;
                     const reduction = 0.1 * base;
                     bbiVal = base - reduction;
                     bbiSteps = [
-                        `(TB - 100) - 10%(TB - 100)`,
-                        `(${TB} - 100) - 10%(${TB} - 100)`,
-                        `${base} - ${fmt(reduction)}`
+                        { label: 'Rumus', val: '(TB - 100) - 10%(TB - 100)' },
+                        { label: 'Subs', val: `(${TB} - 100) - 10%(${TB} - 100)` },
+                        { label: 'Hitung', val: `${base} - ${fmt(reduction)}` }
                     ];
                 }
 
@@ -206,23 +271,20 @@
                 const kebFactor = input.gender === 'male' ? 30 : 25;
                 const kebVal = kebFactor * bbiVal;
 
-                // 4. Koreksi
+                // 4. Koreksi Usia
                 let agePct = 0;
                 if (U >= 40 && U <= 59) agePct = 5;
                 else if (U >= 60 && U <= 69) agePct = 10;
                 else if (U >= 70) agePct = 20;
                 const ageVal = (agePct / 100) * kebVal;
 
-                // 5. Aktivitas
                 const actPct = diet.activityPercent;
                 const actVal = (actPct / 100) * kebVal;
 
-                // 6. KET
                 const ketVal = kebVal + actVal - ageVal;
                 const ketMin = ketVal - (0.1 * ketVal);
                 const ketMax = ketVal + (0.1 * ketVal);
 
-                // 7. Macros
                 const macros = [
                     { key: 'carbo', label: 'Karbohidrat', div: 4 },
                     { key: 'protein', label: 'Protein', div: 4 },
@@ -236,7 +298,6 @@
                     return { ...m, pct, calTotal, gram, maxGram, minGram };
                 });
 
-                // 8. Meal Plan
                 const mealPlan = diet.distribution.map((pct, idx) => ({
                     name: MEAL_NAMES[idx],
                     pct,
@@ -254,42 +315,88 @@
             }, [input]);
 
             return (
-                <div className="min-h-screen bg-neutral-100 font-sans text-neutral-800 p-4 lg:p-8 flex justify-center">
+                <div className="min-h-screen bg-neutral-100 font-sans text-neutral-800 p-4 pb-32 lg:p-8 flex justify-center">
+                    
+                    {/* --- SMART FLOATING FOOTER (2 Rows Max) --- */}
+                    {result && showFloating && (
+                         <div className="fixed bottom-4 left-4 right-4 z-50 animate-slide-up no-print">
+                            <div className="max-w-xl mx-auto bg-white/95 backdrop-blur-md shadow-2xl rounded-2xl border border-neutral-200 p-3 ring-1 ring-black/5">
+                                <div className="flex flex-col gap-2">
+                                    {/* Baris 1: Data Fisik */}
+                                    <div className="flex gap-2 items-center">
+                                        <div className="flex bg-neutral-100 rounded-lg p-1 shrink-0">
+                                            <button onClick={() => setInput({...input, gender: 'male'})} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${input.gender === 'male' ? 'bg-white shadow text-black' : 'text-neutral-400 hover:text-neutral-600'}`}>L</button>
+                                            <button onClick={() => setInput({...input, gender: 'female'})} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${input.gender === 'female' ? 'bg-white shadow text-black' : 'text-neutral-400 hover:text-neutral-600'}`}>P</button>
+                                        </div>
+                                        <CompactInput value={input.age} onChange={v => setInput({...input, age: v})} placeholder="Umur" suffix="th" />
+                                        <CompactInput value={input.weight} onChange={v => setInput({...input, weight: v})} placeholder="BB" suffix="kg" />
+                                        <CompactInput value={input.height} onChange={v => setInput({...input, height: v})} placeholder="TB" suffix="cm" />
+                                    </div>
+                                    
+                                    {/* Baris 2: Diet Type */}
+                                    <div className="relative">
+                                        <select 
+                                            value={input.dietType}
+                                            onChange={(e) => setInput({...input, dietType: e.target.value})}
+                                            className="w-full text-xs font-bold bg-neutral-100 border-none rounded-lg py-2 pl-3 pr-8 cursor-pointer focus:ring-1 focus:ring-emerald-500 text-neutral-700"
+                                        >
+                                            {Object.entries(DIET_TYPES).map(([k,v]) => <option key={k} value={k}>{v.fullLabel}</option>)}
+                                        </select>
+                                        <div className="absolute right-3 top-2 pointer-events-none"><ChevronRight className="w-4 h-4 text-neutral-400 rotate-90" /></div>
+                                    </div>
+                                </div>
+                            </div>
+                         </div>
+                    )}
+
                     <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8 print:block">
-                        {/* INPUT */}
-                        <div className="lg:col-span-4 space-y-6 no-print">
+                        
+                        {/* INPUT PANEL (Observed for scroll logic) */}
+                        <div className="lg:col-span-4 space-y-6 no-print" ref={inputPanelRef} id="input-panel">
                             <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 sticky top-8 overflow-hidden">
-                                <div className="bg-neutral-800 text-white p-5 flex items-center gap-3">
-                                    <Calculator className="w-5 h-5 text-emerald-400" />
-                                    <h2 className="font-semibold tracking-wide">Input Data Pasien</h2>
+                                <div className={`bg-neutral-900 text-white p-5 flex items-center gap-3 border-b-4 ${theme.header}`}>
+                                    <Calculator className={`w-5 h-5 ${input.dietType === 'rendah_lemak' ? 'text-emerald-400' : input.dietType === 'dm' ? 'text-amber-400' : input.dietType === 'rendah_purin' ? 'text-rose-400' : 'text-sky-400'}`} />
+                                    <h2 className="font-semibold tracking-wide">Input Data</h2>
                                 </div>
                                 <div className="p-6 space-y-6">
                                     <div>
                                         <Label text="Jenis Kelamin" />
                                         <div className="grid grid-cols-2 gap-3">
-                                            <GenderButton active={input.gender === 'male'} onClick={() => setInput({...input, gender: 'male'})} label="Laki-laki" />
-                                            <GenderButton active={input.gender === 'female'} onClick={() => setInput({...input, gender: 'female'})} label="Perempuan" />
+                                            <button onClick={() => setInput({...input, gender: 'male'})} className={`py-2.5 px-4 rounded-lg text-sm font-semibold transition-all border ${input.gender === 'male' ? 'bg-neutral-800 text-white border-neutral-800 shadow-md' : 'bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-50'}`}>Laki-laki</button>
+                                            <button onClick={() => setInput({...input, gender: 'female'})} className={`py-2.5 px-4 rounded-lg text-sm font-semibold transition-all border ${input.gender === 'female' ? 'bg-neutral-800 text-white border-neutral-800 shadow-md' : 'bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-50'}`}>Perempuan</button>
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <InputGroup label="Usia" suffix="Thn" value={input.age} onChange={v => setInput({...input, age: v})} />
-                                        <InputGroup label="Berat" suffix="kg" value={input.weight} onChange={v => setInput({...input, weight: v})} />
+                                        <InputGroup label="Usia" suffix="Thn" value={input.age} onChange={v => setInput({...input, age: v})} theme={theme} />
+                                        <InputGroup label="Berat" suffix="kg" value={input.weight} onChange={v => setInput({...input, weight: v})} theme={theme} />
                                     </div>
-                                    <InputGroup label="Tinggi Badan" suffix="cm" value={input.height} onChange={v => setInput({...input, height: v})} />
+                                    <InputGroup label="Tinggi Badan" suffix="cm" value={input.height} onChange={v => setInput({...input, height: v})} theme={theme} />
                                     <hr className="border-neutral-100" />
-                                    <SelectGroup label="Jenis Diet" value={input.dietType} onChange={v => setInput({...input, dietType: v})} options={Object.entries(DIET_TYPES).map(([k,v]) => ({val: k, txt: v.label}))} />
+                                    <div>
+                                        <Label text="Jenis Diet" />
+                                        <div className="relative">
+                                            <select 
+                                                value={input.dietType}
+                                                onChange={(e) => setInput({...input, dietType: e.target.value})}
+                                                className={`w-full appearance-none pl-3 pr-8 py-2.5 rounded-lg border border-neutral-300 bg-white focus:ring-2 outline-none transition-all font-medium text-neutral-700 text-sm ${theme.ring} focus:border-transparent`}
+                                            >
+                                                {Object.entries(DIET_TYPES).map(([k,v]) => <option key={k} value={k}>{v.fullLabel}</option>)}
+                                            </select>
+                                            <div className="absolute right-3 top-3 pointer-events-none"><ChevronRight className="w-4 h-4 text-neutral-400 rotate-90" /></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* OUTPUT */}
+                        {/* OUTPUT PANEL */}
                         <div className="lg:col-span-8">
                             <div className="bg-white min-h-[800px] shadow-lg border border-neutral-300 relative rounded-sm mx-auto max-w-[800px] print-container">
-                                <div className="border-b-4 border-emerald-700 p-8 pb-4">
+                                <div className={`border-b-4 ${theme.header} p-8 pb-4 transition-colors duration-500`}>
                                     <div className="flex justify-between items-end">
                                         <div>
-                                            <h1 className="text-3xl font-serif font-bold text-neutral-900 mb-1">HASIL PERHITUNGAN GIZI</h1>
-                                            <p className="font-serif text-emerald-700 italic">Rincian Penyelesaian Langkah Demi Langkah</p>
+                                            <h1 className="text-3xl font-serif font-bold text-neutral-900 mb-1">HASIL ANALISA GIZI</h1>
+                                            <p className={`font-serif ${theme.accent} italic`}>Laporan Klinis & Perhitungan Kebutuhan</p>
                                         </div>
                                         <FileText className="w-10 h-10 text-neutral-200" />
                                     </div>
@@ -303,12 +410,14 @@
                                         </div>
                                     ) : (
                                         <div className="space-y-8 animate-in fade-in duration-700">
+                                            
+                                            {/* SUMMARY HEADER */}
                                             <div className="mb-8 font-sans">
                                                 <div className="flex flex-col gap-4">
-                                                    <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 flex items-center justify-between">
+                                                    <div className={`${theme.bg} p-4 rounded-lg border ${theme.border} flex items-center justify-between transition-colors duration-500`}>
                                                         <div>
-                                                            <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest block mb-1">Diet Prescribed</span>
-                                                            <span className="text-lg font-bold text-emerald-900">{DIET_TYPES[input.dietType].label}</span>
+                                                            <span className={`text-xs font-bold ${theme.accent} uppercase tracking-widest block mb-1`}>Diet Prescribed</span>
+                                                            <span className={`text-lg font-bold ${theme.text}`}>{DIET_TYPES[input.dietType].fullLabel}</span>
                                                         </div>
                                                     </div>
                                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -330,76 +439,62 @@
                                                 </div>
                                             </div>
 
-                                            <Section title="1) Indeks Massa Tubuh (IMT)">
-                                                <MathLine label="IMT" formula="BB (kg) / TB (m)²" />
-                                                <MathLine label="" formula={`${fmt(result.im.bb)} / (${fmt(result.im.tbm, 2)})²`} />
-                                                <MathLine label="" formula={fmt(result.im.val, 1)} isResult resultUnit="kg/m²" />
+                                            {/* CALCULATIONS */}
+                                            <Section title="1) Indeks Massa Tubuh (IMT)" theme={theme}>
+                                                {/* Peralihan Data: Rumus -> Subs -> Hasil */}
+                                                <MathLine label="IMT" formula="BB (kg) / TB (m)²" theme={theme} />
+                                                <MathLine label="" formula={`${fmt(result.im.bb)} / (${fmt(result.im.tbm, 2)})²`} theme={theme} />
+                                                <MathLine label="" formula={fmt(result.im.val, 1)} isResult resultUnit="kg/m²" theme={theme} />
                                             </Section>
 
-                                            <Section title="2) Berat Badan Ideal (BBI)" rightElement={
-                                                <select className="text-xs font-sans border border-neutral-300 rounded px-2 py-1 bg-white hover:border-emerald-500 cursor-pointer no-print" value={input.bbiVersion} onChange={e => setInput({...input, bbiVersion: e.target.value})}>
+                                            <Section title="2) Berat Badan Ideal (BBI)" theme={theme} rightElement={
+                                                <select className={`text-xs font-sans border ${theme.border} rounded px-2 py-1 bg-white cursor-pointer no-print focus:outline-none`} value={input.bbiVersion} onChange={e => setInput({...input, bbiVersion: e.target.value})}>
                                                     <option value="v1">Rumus 90% (Broca)</option>
                                                     <option value="v2">Rumus Modifikasi</option>
                                                 </select>
                                             }>
-                                                {/* Menggunakan label hanya di baris pertama, sisanya kosong agar sejajar */}
                                                 {result.bbi.steps.map((step, i) => (
-                                                    <MathLine key={i} label={i === 0 ? "BBI" : ""} formula={step} />
+                                                    // Menampilkan label tahapan (Rumus/Subs/Hitung) di kolom label
+                                                    <MathLine key={i} label={i===0 ? "BBI" : ""} formula={step.val} theme={theme} />
                                                 ))}
-                                                <MathLine label="" formula={fmt(result.bbi.val, 1)} isResult resultUnit="kg" />
+                                                <MathLine label="" formula={fmt(result.bbi.val, 1)} isResult resultUnit="kg" theme={theme} />
                                             </Section>
 
-                                            <Section title="3) Kebutuhan Energi Basal (KEB)">
-                                                <MathLine label="KEB" formula={`${result.keb.factor} kkal x BBI`} />
-                                                <MathLine label="" formula={`${result.keb.factor} x ${fmt(result.bbi.val, 1)}`} />
-                                                <MathLine label="" formula={fmt(result.keb.val, 1)} isResult resultUnit="kkal" />
+                                            <Section title="3) Kebutuhan Energi Basal (KEB)" theme={theme}>
+                                                <MathLine label="KEB" formula={`${result.keb.factor} kkal x BBI`} theme={theme} />
+                                                <MathLine label="" formula={`${result.keb.factor} x ${fmt(result.bbi.val, 1)}`} theme={theme} />
+                                                <MathLine label="" formula={fmt(result.keb.val, 1)} isResult resultUnit="kkal" theme={theme} />
                                             </Section>
 
-                                            <Section title="4) Kebutuhan Energi Total (KET)">
-                                                <MathLine label="-KET" formula="KEB + % KEB aktivitas - % KEB faktor koreksi" />
-                                                <MathLine label="" formula={`${fmt(result.keb.val, 1)} + (${result.ket.actPct}% x ${fmt(result.keb.val, 1)}) - (${result.ket.agePct}% x ${fmt(result.keb.val, 1)})`} />
-                                                <MathLine label="" formula={`${fmt(result.keb.val, 1)} + ${fmt(result.ket.actVal, 1)} - ${fmt(result.ket.ageVal, 1)}`} />
-                                                <MathLine label="" formula={fmt(result.ket.val, 2)} isResult resultUnit="kkal" />
+                                            <Section title="4) Kebutuhan Energi Total (KET)" theme={theme}>
+                                                <MathLine label="-KET" formula="KEB + % KEB aktivitas - % KEB faktor koreksi" theme={theme} smallText />
+                                                <MathLine label="" formula={`${fmt(result.keb.val, 1)} + (${result.ket.actPct}% x ${fmt(result.keb.val, 1)}) - (${result.ket.agePct}% x ${fmt(result.keb.val, 1)})`} theme={theme} smallText />
+                                                <MathLine label="" formula={`${fmt(result.keb.val, 1)} + ${fmt(result.ket.actVal, 1)} - ${fmt(result.ket.ageVal, 1)}`} theme={theme} smallText />
+                                                <MathLine label="" formula={fmt(result.ket.val, 2)} isResult resultUnit="kkal" theme={theme} />
 
-                                                <div className="mt-4 pl-0">
-                                                    <div className="font-bold text-neutral-900 mb-2 font-sans text-sm uppercase tracking-wider border-l-4 border-emerald-500 pl-3">Batas Adekuat</div>
-                                                    <MathLine label="KET" formula="(+/-) (10% x KET)" />
-                                                    
-                                                    {/* Max */}
-                                                    <div className="grid grid-cols-[60px_20px_1fr] gap-y-1 font-mono text-lg text-neutral-700 leading-snug mt-1">
-                                                        <div></div>
-                                                        <div className="text-center">=</div>
-                                                        <div>
-                                                            {fmt(result.ket.val, 2)} + {fmt(result.ket.val * 0.1, 2)} = <span className="font-bold text-emerald-700">{fmt(result.ket.max, 2)} kkal (Max)</span>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    {/* Min */}
-                                                    <div className="grid grid-cols-[60px_20px_1fr] gap-y-1 font-mono text-lg text-neutral-700 leading-snug">
-                                                        <div></div>
-                                                        <div className="text-center">=</div>
-                                                        <div>
-                                                            {fmt(result.ket.val, 2)} - {fmt(result.ket.val * 0.1, 2)} = <span className="font-bold text-emerald-700">{fmt(result.ket.min, 2)} kkal (Min)</span>
-                                                        </div>
+                                                <div className="mt-4 text-sm pl-0">
+                                                    <div className="text-neutral-500 italic mb-1">Batas Adekuat KET (+/- 10%)</div>
+                                                    <div className={`font-mono text-neutral-700 pl-4 border-l-2 ${theme.border}`}>
+                                                        <div>Max: {fmt(result.ket.val, 2)} + 10% = <span className={`font-bold ${theme.accent}`}>{fmt(result.ket.max, 2)} kkal</span></div>
+                                                        <div>Min: {fmt(result.ket.val, 2)} - 10% = <span className={`font-bold ${theme.accent}`}>{fmt(result.ket.min, 2)} kkal</span></div>
                                                     </div>
                                                 </div>
                                             </Section>
 
-                                            <Section title="5) Makronutrien">
+                                            <Section title="5) Makronutrien" theme={theme}>
                                                 <div className="space-y-6">
                                                     {result.macros.map((m) => (
                                                         <div key={m.key}>
                                                             <div className="font-bold text-neutral-800 mb-1">• {m.label}</div>
-                                                            {/* Grid untuk makro - label dikosongkan agar = sejajar */}
-                                                            <MathLine label="" formula={`${m.pct}% x KET : ${m.div}`} />
-                                                            <MathLine label="" formula={`${m.pct}% x ${fmt(result.ket.val, 2)} : ${m.div}`} />
-                                                            <MathLine label="" formula={fmt(m.gram, 1)} isResult resultUnit="gram" />
+                                                            <MathLine label="" formula={`${m.pct}% x KET : ${m.div}`} theme={theme} />
+                                                            <MathLine label="" formula={`${m.pct}% x ${fmt(result.ket.val, 2)} : ${m.div}`} theme={theme} />
+                                                            <MathLine label="" formula={fmt(m.gram, 1)} isResult resultUnit="gram" theme={theme} />
                                                             
                                                             <div className="mt-2 text-sm pl-0">
                                                                 <div className="text-neutral-500 italic mb-1">Batas Adekuat {m.label} (+/- 10%)</div>
-                                                                <div className="font-mono text-neutral-700 pl-4 border-l-2 border-neutral-200">
-                                                                    <div>Max: {fmt(m.gram, 1)} + 10% = <span className="font-bold text-emerald-700">{fmt(m.maxGram, 1)} gr</span></div>
-                                                                    <div>Min: {fmt(m.gram, 1)} - 10% = <span className="font-bold text-emerald-700">{fmt(m.minGram, 1)} gr</span></div>
+                                                                <div className={`font-mono text-neutral-700 pl-4 border-l-2 ${theme.border}`}>
+                                                                    <div>Max: {fmt(m.gram, 1)} + 10% = <span className={`font-bold ${theme.accent}`}>{fmt(m.maxGram, 1)} gr</span></div>
+                                                                    <div>Min: {fmt(m.gram, 1)} - 10% = <span className={`font-bold ${theme.accent}`}>{fmt(m.minGram, 1)} gr</span></div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -407,32 +502,59 @@
                                                 </div>
                                             </Section>
 
-                                            <Section title="6) Planning (Menu Sehari)">
+                                            <Section title="6) Planning (Menu Sehari)" theme={theme}>
                                                 <div className="grid gap-3">
                                                     {result.mealPlan.map((meal, idx) => (
                                                         <div key={idx} className="flex flex-col sm:flex-row sm:items-baseline gap-2 pb-2 border-b border-dotted border-neutral-200 last:border-0">
                                                             <div className="w-40 font-bold text-neutral-800 text-sm uppercase tracking-wide">- {meal.name}</div>
                                                             <div className="flex-1 font-mono text-neutral-600">
-                                                                {meal.pct}% x {fmt(result.ket.val, 0)} = <span className="font-bold text-emerald-700">{fmt(meal.cal, 1)} kkal</span>
+                                                                {meal.pct}% x {fmt(result.ket.val, 0)} = <span className={`font-bold ${theme.accent}`}>{fmt(meal.cal, 1)} kkal</span>
                                                             </div>
                                                         </div>
                                                     ))}
                                                 </div>
                                             </Section>
 
-                                            <div className="mt-8 bg-neutral-50 p-6 border-t-2 border-emerald-500 rounded-b-sm">
-                                                <h4 className="font-bold text-sm uppercase tracking-wider text-emerald-800 mb-3 flex items-center gap-2">
-                                                    <Info className="w-4 h-4"/> Catatan Faktor Penentu
+                                            {/* DYNAMIC TRANSPARENCY / FACTOR NOTES */}
+                                            <div className={`${theme.bg} p-6 border-t-2 ${theme.subBorder} rounded-b-sm`}>
+                                                <h4 className={`font-bold text-sm uppercase tracking-wider ${theme.text} mb-4 flex items-center gap-2`}>
+                                                    <Info className="w-4 h-4"/> Faktor Penentu (Transparansi Data)
                                                 </h4>
-                                                <ul className="text-sm font-sans text-neutral-600 space-y-2 list-disc pl-4">
-                                                    <li><strong className="text-neutral-800">Jenis Kelamin:</strong> Menentukan konstanta kalori pada rumus KEB (Pria = 30, Wanita = 25).</li>
-                                                    <li><strong className="text-neutral-800">Usia:</strong> Menentukan persentase faktor koreksi energi (40-59 thn: -5%, dst).</li>
-                                                    <li><strong className="text-neutral-800">Tinggi & Berat:</strong> Dasar perhitungan IMT dan Berat Badan Ideal.</li>
-                                                </ul>
+                                                
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    {/* Tabel Faktor Usia */}
+                                                    <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden shadow-sm">
+                                                        <div className="bg-neutral-50 px-3 py-2 border-b border-neutral-200 text-xs font-bold text-neutral-500 uppercase">Koreksi Usia</div>
+                                                        <table className="w-full">
+                                                            <tbody>
+                                                                <TableRow label="< 40 Tahun" value="0%" isActive={parseInt(input.age) < 40} theme={theme} />
+                                                                <TableRow label="40 - 59 Tahun" value="5%" isActive={parseInt(input.age) >= 40 && parseInt(input.age) <= 59} theme={theme} />
+                                                                <TableRow label="60 - 69 Tahun" value="10%" isActive={parseInt(input.age) >= 60 && parseInt(input.age) <= 69} theme={theme} />
+                                                                <TableRow label="≥ 70 Tahun" value="20%" isActive={parseInt(input.age) >= 70} theme={theme} />
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                    {/* Tabel Rumus Gender/BBI */}
+                                                    <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden shadow-sm">
+                                                        <div className="bg-neutral-50 px-3 py-2 border-b border-neutral-200 text-xs font-bold text-neutral-500 uppercase">Konstanta Gender (KEB)</div>
+                                                        <table className="w-full">
+                                                            <tbody>
+                                                                <TableRow label="Laki-laki" value="30 kkal" isActive={input.gender === 'male'} theme={theme} />
+                                                                <TableRow label="Perempuan" value="25 kkal" isActive={input.gender === 'female'} theme={theme} />
+                                                            </tbody>
+                                                        </table>
+                                                        
+                                                        <div className="mt-2 bg-neutral-50 px-3 py-2 border-y border-neutral-200 text-xs font-bold text-neutral-500 uppercase">Rumus BBI Terpilih</div>
+                                                        <div className={`px-3 py-2 text-sm font-mono ${theme.text} bg-white`}>
+                                                            {input.bbiVersion === 'v1' ? 'Broca (90%)' : 'Broca Modifikasi'}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             <div className="mt-8 pt-4 border-t border-neutral-200 flex justify-between items-center text-xs font-sans text-neutral-400">
-                                                <span>Generated by Gizi Kalkulator</span>
+                                                <span>Generated by Gizi Kalkulator Modern</span>
                                                 <span>{new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                                             </div>
                                         </div>
