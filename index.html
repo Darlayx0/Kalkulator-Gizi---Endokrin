@@ -309,8 +309,8 @@
                 // Langkah 1: KET Prelim (Tanpa Defisit)
                 const ketPrelim = kebVal + actVal - ageVal;
                 
-                // Langkah 2: KET Final (Dikurangi Defisit 500)
-                const DEFICIT = 500;
+                // Langkah 2: KET Final (Dikurangi Defisit 500 HANYA JIKA diet == rendah_lemak)
+                const DEFICIT = input.dietType === 'rendah_lemak' ? 500 : 0;
                 const ketFinal = ketPrelim - DEFICIT; 
                 
                 // Gunakan ketFinal untuk makro
@@ -342,7 +342,7 @@
                     keb: { val: kebVal, factor: kebFactor },
                     ket: { 
                         val: ketFinal, 
-                        prelim: ketPrelim, // Simpan nilai sebelum defisit
+                        prelim: ketPrelim, 
                         actPct, actVal, agePct, ageVal, min: ketMin, max: ketMax, deficit: DEFICIT 
                     },
                     macros,
@@ -584,12 +584,14 @@
                                                 <MathLine label="" formula={`${fmt(result.keb.val, 1)} + ${fmt(result.ket.actVal, 1)} - ${fmt(result.ket.ageVal, 1)}`} theme={theme} smallText />
                                                 <MathLine label="" formula={fmt(result.ket.prelim, 2)} isResult resultUnit="kkal" theme={theme} />
 
-                                                {/* Step 2: Total Energi Akhir (Defisit) */}
-                                                <div className="mt-4 mb-2">
-                                                    <MathLine label="-Total" formula="KET - 500 kkal (Defisit)" theme={theme} smallText />
-                                                    <MathLine label="" formula={`${fmt(result.ket.prelim, 2)} - 500`} theme={theme} smallText />
-                                                    <MathLine label="" formula={fmt(result.ket.val, 2)} isResult resultUnit="kkal" theme={theme} />
-                                                </div>
+                                                {/* Step 2: Total Energi Akhir (Hanya jika diet rendah lemak) */}
+                                                {result.ket.deficit > 0 && (
+                                                    <div className="mt-4 mb-2 animate-in">
+                                                        <MathLine label="-Total" formula="KET - 500 kkal (Defisit Diet Rendah Kalori)" theme={theme} smallText />
+                                                        <MathLine label="" formula={`${fmt(result.ket.prelim, 2)} - 500`} theme={theme} smallText />
+                                                        <MathLine label="" formula={fmt(result.ket.val, 2)} isResult resultUnit="kkal" theme={theme} />
+                                                    </div>
+                                                )}
 
                                                 <div className="mt-4 text-sm pl-0">
                                                     <div className="text-neutral-500 italic mb-1">Batas Adekuat KET (+/- 10%)</div>
@@ -674,7 +676,7 @@
                                                             
                                                             <div className="bg-neutral-50 px-3 py-2 border-b border-neutral-200 text-xs font-bold text-neutral-500 uppercase">Defisit Kalori</div>
                                                             <div className={`px-3 py-2 text-sm font-mono font-bold ${theme.text} bg-white`}>
-                                                                -500 kkal (Fixed)
+                                                                {result.ket.deficit > 0 ? '-500 kkal (Diet Rendah Lemak)' : '0 kkal (Tidak Ada)'}
                                                             </div>
                                                         </div>
                                                     </div>
