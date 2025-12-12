@@ -47,7 +47,6 @@
     
     <style>
         .animate-in { animation: fadeIn 0.7s ease-out forwards; }
-        /* Hide scrollbar for cleaner UI */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -80,7 +79,7 @@
         const Ruler = ({ className }) => <IconWrapper className={className}><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></IconWrapper>;
         const Weight = ({ className }) => <IconWrapper className={className}><circle cx="12" cy="5" r="3"/><path d="M6.5 8a2 2 0 0 0-1.905 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.5A2 2 0 0 0 17.48 8Z"/></IconWrapper>;
         const Clock = ({ className }) => <IconWrapper className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconWrapper>;
-        const Settings = ({ className }) => <IconWrapper className={className}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></IconWrapper>;
+        const Briefcase = ({ className }) => <IconWrapper className={className}><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></IconWrapper>;
 
         // --- THEME CONFIGURATION ---
         const THEMES = {
@@ -114,8 +113,25 @@
             }
         };
 
-        // --- SUB-COMPONENTS ---
+        const ACTIVITY_GROUPS = [
+            { label: 'Ringan', options: [
+                { name: 'Membaca', val: 10 },
+                { name: 'Menyetir', val: 10 },
+                { name: 'Berjalan', val: 20 }
+            ]},
+            { label: 'Sedang', options: [
+                { name: 'Menyapu', val: 20 },
+                { name: 'Jalan Cepat', val: 30 },
+                { name: 'Bersepeda', val: 30 }
+            ]},
+            { label: 'Berat', options: [
+                { name: 'Aerobik', val: 40 },
+                { name: 'Mendaki', val: 40 },
+                { name: 'Jogging', val: 40 }
+            ]}
+        ];
 
+        // --- SUB-COMPONENTS ---
         const MathLine = ({ label, formula, isResult, resultUnit, theme, smallText }) => (
             <div className={`grid grid-cols-[60px_20px_1fr] gap-y-1 font-mono ${smallText ? 'text-sm' : 'text-lg'} text-neutral-700 leading-snug`}>
                 <div className="font-semibold whitespace-nowrap">{label || ''}</div>
@@ -186,7 +202,6 @@
         );
 
         // --- MAIN APP ---
-
         const NutritionPaperApp = () => {
             const [input, setInput] = useState({
                 age: '',
@@ -194,17 +209,20 @@
                 height: '',
                 weight: '',
                 bbiVersion: 'v1',
-                dietType: 'rendah_lemak'
+                dietType: 'rendah_lemak',
+                activitySource: 'edukasi', // 'edukasi' | 'tambahan'
+                activityName: 'Berjalan',
+                activityPct: 20
             });
             const [result, setResult] = useState(null);
             const [showFloating, setShowFloating] = useState(false);
             const inputPanelRef = useRef(null);
 
             const DIET_TYPES = {
-                rendah_lemak: { label: "Diet Rendah Lemak", fullLabel: "Diet Rendah Lemak & Rendah Kalori", activityPercent: 20, macros: { carbo: 65, protein: 15, fat: 20 }, distribution: [25, 10, 30, 10, 25] },
-                dm: { label: "Diet DM", fullLabel: "Diet Diabetes Melitus", activityPercent: 20, macros: { carbo: 50, protein: 30, fat: 20 }, distribution: [25, 10, 30, 10, 25] },
-                rendah_purin: { label: "Diet R. Purin", fullLabel: "Diet Rendah Purin", activityPercent: 10, macros: { carbo: 65, protein: 15, fat: 20 }, distribution: [25, 10, 30, 10, 25] },
-                gaky: { label: "Diet GAKY", fullLabel: "Diet GAKY", activityPercent: 20, macros: { carbo: 65, protein: 15, fat: 20 }, distribution: [25, 10, 30, 10, 25] }
+                rendah_lemak: { label: "Diet Rendah Lemak", fullLabel: "Diet Rendah Lemak & Rendah Kalori", macros: { carbo: 65, protein: 15, fat: 20 }, distribution: [25, 10, 30, 10, 25] },
+                dm: { label: "Diet DM", fullLabel: "Diet Diabetes Melitus", macros: { carbo: 50, protein: 30, fat: 20 }, distribution: [25, 10, 30, 10, 25] },
+                rendah_purin: { label: "Diet R. Purin", fullLabel: "Diet Rendah Purin", macros: { carbo: 65, protein: 15, fat: 20 }, distribution: [25, 10, 30, 10, 25] },
+                gaky: { label: "Diet GAKY", fullLabel: "Diet GAKY", macros: { carbo: 65, protein: 15, fat: 20 }, distribution: [25, 10, 30, 10, 25] }
             };
             const MEAL_NAMES = ["Makan Pagi", "Selingan Pagi", "Makan Siang", "Selingan Sore", "Makan Malam"];
             const fmt = (num, decimals = 1) => {
@@ -214,15 +232,20 @@
 
             const theme = THEMES[input.dietType] || THEMES.rendah_lemak;
 
+            // --- HANDLERS ---
+            const handleActivityChange = (e) => {
+                const valStr = e.target.value; // "Name|Pct"
+                const [name, pct] = valStr.split('|');
+                setInput({ ...input, activityName: name, activityPct: parseInt(pct) });
+            };
+
             // --- SCROLL DETECTION LOGIC ---
             useEffect(() => {
                 const observer = new IntersectionObserver(
                     ([entry]) => {
-                        // Jika input panel terlihat (isIntersecting = true), sembunyikan floating bar
-                        // Jika input panel tidak terlihat (scroll ke bawah), tampilkan floating bar
                         setShowFloating(!entry.isIntersecting);
                     },
-                    { threshold: 0.1 } // Trigger saat 10% elemen masuk/keluar viewport
+                    { threshold: 0.1 } 
                 );
 
                 if (inputPanelRef.current) {
@@ -278,10 +301,16 @@
                 else if (U >= 70) agePct = 20;
                 const ageVal = (agePct / 100) * kebVal;
 
-                const actPct = diet.activityPercent;
+                // 5. Aktivitas 
+                // Jika "Tugas Tambahan", fix 20%. Jika "Hasil Edukasi", gunakan input dropdown.
+                const actPct = input.activitySource === 'tambahan' ? 20 : input.activityPct;
                 const actVal = (actPct / 100) * kebVal;
 
-                const ketVal = kebVal + actVal - ageVal;
+                // Hitungan KET: Fix Defisit 500
+                const DEFICIT = 500;
+                const ketPrelim = kebVal + actVal - ageVal;
+                const ketVal = ketPrelim - DEFICIT; 
+                
                 const ketMin = ketVal - (0.1 * ketVal);
                 const ketMax = ketVal + (0.1 * ketVal);
 
@@ -308,7 +337,7 @@
                     im: { val: imtVal, bb: BB, tbm: TB_M },
                     bbi: { val: bbiVal, steps: bbiSteps },
                     keb: { val: kebVal, factor: kebFactor },
-                    ket: { val: ketVal, actPct, actVal, agePct, ageVal, min: ketMin, max: ketMax },
+                    ket: { val: ketVal, actPct, actVal, agePct, ageVal, min: ketMin, max: ketMax, deficit: DEFICIT },
                     macros,
                     mealPlan
                 });
@@ -317,12 +346,12 @@
             return (
                 <div className="min-h-screen bg-neutral-100 font-sans text-neutral-800 p-4 pb-32 lg:p-8 flex justify-center">
                     
-                    {/* --- SMART FLOATING FOOTER (2 Rows Max) --- */}
+                    {/* --- SMART FLOATING FOOTER --- */}
                     {result && showFloating && (
                          <div className="fixed bottom-4 left-4 right-4 z-50 animate-slide-up no-print">
-                            <div className="max-w-xl mx-auto bg-white/95 backdrop-blur-md shadow-2xl rounded-2xl border border-neutral-200 p-3 ring-1 ring-black/5">
+                            <div className="max-w-2xl mx-auto bg-white/95 backdrop-blur-md shadow-2xl rounded-2xl border border-neutral-200 p-3 ring-1 ring-black/5">
                                 <div className="flex flex-col gap-2">
-                                    {/* Baris 1: Data Fisik */}
+                                    {/* Baris 1: Basic Bio */}
                                     <div className="flex gap-2 items-center">
                                         <div className="flex bg-neutral-100 rounded-lg p-1 shrink-0">
                                             <button onClick={() => setInput({...input, gender: 'male'})} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${input.gender === 'male' ? 'bg-white shadow text-black' : 'text-neutral-400 hover:text-neutral-600'}`}>L</button>
@@ -333,16 +362,41 @@
                                         <CompactInput value={input.height} onChange={v => setInput({...input, height: v})} placeholder="TB" suffix="cm" />
                                     </div>
                                     
-                                    {/* Baris 2: Diet Type */}
-                                    <div className="relative">
-                                        <select 
-                                            value={input.dietType}
-                                            onChange={(e) => setInput({...input, dietType: e.target.value})}
-                                            className="w-full text-xs font-bold bg-neutral-100 border-none rounded-lg py-2 pl-3 pr-8 cursor-pointer focus:ring-1 focus:ring-emerald-500 text-neutral-700"
-                                        >
-                                            {Object.entries(DIET_TYPES).map(([k,v]) => <option key={k} value={k}>{v.fullLabel}</option>)}
-                                        </select>
-                                        <div className="absolute right-3 top-2 pointer-events-none"><ChevronRight className="w-4 h-4 text-neutral-400 rotate-90" /></div>
+                                    {/* Baris 2: Activity & Diet (Dropdowns) */}
+                                    <div className="flex gap-2">
+                                        {/* Activity Compact Selector */}
+                                        <div className="relative w-1/2">
+                                            {input.activitySource === 'tambahan' ? (
+                                                <div className="w-full text-xs font-bold bg-neutral-100 border-none rounded-lg py-2 pl-3 pr-4 text-neutral-400 cursor-not-allowed truncate flex items-center justify-between">
+                                                    <span>Tugas Tambahan (20%)</span>
+                                                </div>
+                                            ) : (
+                                                <select 
+                                                    value={`${input.activityName}|${input.activityPct}`}
+                                                    onChange={handleActivityChange}
+                                                    className="w-full text-xs font-bold bg-neutral-100 border-none rounded-lg py-2 pl-2 pr-4 cursor-pointer focus:ring-1 focus:ring-emerald-500 text-neutral-700 truncate"
+                                                >
+                                                    {ACTIVITY_GROUPS.map((group, idx) => (
+                                                        <optgroup key={idx} label={group.label}>
+                                                            {group.options.map((opt) => (
+                                                                <option key={opt.name} value={`${opt.name}|${opt.val}`}>{opt.name} ({opt.val}%)</option>
+                                                            ))}
+                                                        </optgroup>
+                                                    ))}
+                                                </select>
+                                            )}
+                                        </div>
+                                        {/* Diet Selector */}
+                                        <div className="relative w-1/2">
+                                            <select 
+                                                value={input.dietType}
+                                                onChange={(e) => setInput({...input, dietType: e.target.value})}
+                                                className="w-full text-xs font-bold bg-neutral-100 border-none rounded-lg py-2 pl-2 pr-6 cursor-pointer focus:ring-1 focus:ring-emerald-500 text-neutral-700 truncate"
+                                            >
+                                                {Object.entries(DIET_TYPES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+                                            </select>
+                                            <div className="absolute right-2 top-2 pointer-events-none"><ChevronRight className="w-4 h-4 text-neutral-400 rotate-90" /></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -359,6 +413,7 @@
                                     <h2 className="font-semibold tracking-wide">Input Data</h2>
                                 </div>
                                 <div className="p-6 space-y-6">
+                                    {/* Data Bio */}
                                     <div>
                                         <Label text="Jenis Kelamin" />
                                         <div className="grid grid-cols-2 gap-3">
@@ -371,10 +426,13 @@
                                         <InputGroup label="Berat" suffix="kg" value={input.weight} onChange={v => setInput({...input, weight: v})} theme={theme} />
                                     </div>
                                     <InputGroup label="Tinggi Badan" suffix="cm" value={input.height} onChange={v => setInput({...input, height: v})} theme={theme} />
+                                    
                                     <hr className="border-neutral-100" />
+                                    
+                                    {/* Config Diet */}
                                     <div>
                                         <Label text="Jenis Diet" />
-                                        <div className="relative">
+                                        <div className="relative mb-4">
                                             <select 
                                                 value={input.dietType}
                                                 onChange={(e) => setInput({...input, dietType: e.target.value})}
@@ -385,6 +443,54 @@
                                             <div className="absolute right-3 top-3 pointer-events-none"><ChevronRight className="w-4 h-4 text-neutral-400 rotate-90" /></div>
                                         </div>
                                     </div>
+
+                                    {/* Config Aktivitas Mode */}
+                                    <div>
+                                        <Label text="Jenis Aktivitas (KEB)" />
+                                        
+                                        {/* Switch Mode */}
+                                        <div className="flex bg-neutral-100 p-1 rounded-lg mb-3">
+                                            <button 
+                                                onClick={() => setInput({...input, activitySource: 'edukasi'})} 
+                                                className={`flex-1 py-2 rounded text-xs font-bold transition-all ${input.activitySource === 'edukasi' ? 'bg-white shadow text-emerald-700' : 'text-neutral-400 hover:text-neutral-600'}`}
+                                            >
+                                                Hasil Edukasi
+                                            </button>
+                                            <button 
+                                                onClick={() => setInput({...input, activitySource: 'tambahan'})} 
+                                                className={`flex-1 py-2 rounded text-xs font-bold transition-all ${input.activitySource === 'tambahan' ? 'bg-white shadow text-emerald-700' : 'text-neutral-400 hover:text-neutral-600'}`}
+                                            >
+                                                Tugas Tambahan
+                                            </button>
+                                        </div>
+
+                                        {/* Dropdown if Edukasi */}
+                                        {input.activitySource === 'edukasi' ? (
+                                            <div className="relative animate-in">
+                                                <select 
+                                                    value={`${input.activityName}|${input.activityPct}`}
+                                                    onChange={handleActivityChange}
+                                                    className={`w-full appearance-none pl-3 pr-8 py-2.5 rounded-lg border border-neutral-300 bg-white focus:ring-2 outline-none transition-all font-medium text-neutral-700 text-sm ${theme.ring} focus:border-transparent`}
+                                                >
+                                                    {ACTIVITY_GROUPS.map((group, idx) => (
+                                                        <optgroup key={idx} label={group.label}>
+                                                            {group.options.map((opt) => (
+                                                                <option key={opt.name} value={`${opt.name}|${opt.val}`}>{opt.name} ({opt.val}%)</option>
+                                                            ))}
+                                                        </optgroup>
+                                                    ))}
+                                                </select>
+                                                <div className="absolute right-3 top-3 pointer-events-none"><ChevronRight className="w-4 h-4 text-neutral-400 rotate-90" /></div>
+                                            </div>
+                                        ) : (
+                                            /* Static Info if Tambahan */
+                                            <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-3 text-sm text-neutral-600 flex items-center gap-2 animate-in">
+                                                <Briefcase className="w-4 h-4 text-neutral-400" />
+                                                <span>Aktivitas Fix: <strong>20% (Tugas Tambahan)</strong></span>
+                                            </div>
+                                        )}
+                                    </div>
+
                                 </div>
                             </div>
                         </div>
@@ -441,7 +547,6 @@
 
                                             {/* CALCULATIONS */}
                                             <Section title="1) Indeks Massa Tubuh (IMT)" theme={theme}>
-                                                {/* Peralihan Data: Rumus -> Subs -> Hasil */}
                                                 <MathLine label="IMT" formula="BB (kg) / TB (m)²" theme={theme} />
                                                 <MathLine label="" formula={`${fmt(result.im.bb)} / (${fmt(result.im.tbm, 2)})²`} theme={theme} />
                                                 <MathLine label="" formula={fmt(result.im.val, 1)} isResult resultUnit="kg/m²" theme={theme} />
@@ -454,7 +559,6 @@
                                                 </select>
                                             }>
                                                 {result.bbi.steps.map((step, i) => (
-                                                    // Menampilkan label tahapan (Rumus/Subs/Hitung) di kolom label
                                                     <MathLine key={i} label={i===0 ? "BBI" : ""} formula={step.val} theme={theme} />
                                                 ))}
                                                 <MathLine label="" formula={fmt(result.bbi.val, 1)} isResult resultUnit="kg" theme={theme} />
@@ -467,9 +571,10 @@
                                             </Section>
 
                                             <Section title="4) Kebutuhan Energi Total (KET)" theme={theme}>
-                                                <MathLine label="-KET" formula="KEB + % KEB aktivitas - % KEB faktor koreksi" theme={theme} smallText />
-                                                <MathLine label="" formula={`${fmt(result.keb.val, 1)} + (${result.ket.actPct}% x ${fmt(result.keb.val, 1)}) - (${result.ket.agePct}% x ${fmt(result.keb.val, 1)})`} theme={theme} smallText />
-                                                <MathLine label="" formula={`${fmt(result.keb.val, 1)} + ${fmt(result.ket.actVal, 1)} - ${fmt(result.ket.ageVal, 1)}`} theme={theme} smallText />
+                                                {/* Update: Fixed 500 Deficit Logic Display */}
+                                                <MathLine label="-KET" formula="KEB + % KEB aktivitas - % KEB faktor koreksi - 500 (Defisit)" theme={theme} smallText />
+                                                <MathLine label="" formula={`${fmt(result.keb.val, 1)} + (${result.ket.actPct}% x ${fmt(result.keb.val, 1)}) - (${result.ket.agePct}% x ${fmt(result.keb.val, 1)}) - 500`} theme={theme} smallText />
+                                                <MathLine label="" formula={`${fmt(result.keb.val, 1)} + ${fmt(result.ket.actVal, 1)} - ${fmt(result.ket.ageVal, 1)} - 500`} theme={theme} smallText />
                                                 <MathLine label="" formula={fmt(result.ket.val, 2)} isResult resultUnit="kkal" theme={theme} />
 
                                                 <div className="mt-4 text-sm pl-0">
@@ -535,19 +640,28 @@
                                                         </table>
                                                     </div>
 
-                                                    {/* Tabel Rumus Gender/BBI */}
-                                                    <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden shadow-sm">
-                                                        <div className="bg-neutral-50 px-3 py-2 border-b border-neutral-200 text-xs font-bold text-neutral-500 uppercase">Konstanta Gender (KEB)</div>
-                                                        <table className="w-full">
-                                                            <tbody>
-                                                                <TableRow label="Laki-laki" value="30 kkal" isActive={input.gender === 'male'} theme={theme} />
-                                                                <TableRow label="Perempuan" value="25 kkal" isActive={input.gender === 'female'} theme={theme} />
-                                                            </tbody>
-                                                        </table>
-                                                        
-                                                        <div className="mt-2 bg-neutral-50 px-3 py-2 border-y border-neutral-200 text-xs font-bold text-neutral-500 uppercase">Rumus BBI Terpilih</div>
-                                                        <div className={`px-3 py-2 text-sm font-mono ${theme.text} bg-white`}>
-                                                            {input.bbiVersion === 'v1' ? 'Broca (90%)' : 'Broca Modifikasi'}
+                                                    <div className="space-y-4">
+                                                        {/* Tabel Rumus Gender/BBI */}
+                                                        <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden shadow-sm">
+                                                            <div className="bg-neutral-50 px-3 py-2 border-b border-neutral-200 text-xs font-bold text-neutral-500 uppercase">Konstanta Gender (KEB)</div>
+                                                            <table className="w-full">
+                                                                <tbody>
+                                                                    <TableRow label="Laki-laki" value="30 kkal" isActive={input.gender === 'male'} theme={theme} />
+                                                                    <TableRow label="Perempuan" value="25 kkal" isActive={input.gender === 'female'} theme={theme} />
+                                                                </tbody>
+                                                            </table>
+                                                            
+                                                            <div className="mt-2 bg-neutral-50 px-3 py-2 border-y border-neutral-200 text-xs font-bold text-neutral-500 uppercase">Aktivitas Terpilih</div>
+                                                            <div className={`px-3 py-2 text-sm font-mono ${theme.text} bg-white border-b border-neutral-200`}>
+                                                                {input.activitySource === 'tambahan' 
+                                                                    ? 'Tugas Tambahan (20%)' 
+                                                                    : `${input.activityName} (${input.activityPct}%)`}
+                                                            </div>
+                                                            
+                                                            <div className="bg-neutral-50 px-3 py-2 border-b border-neutral-200 text-xs font-bold text-neutral-500 uppercase">Defisit Kalori</div>
+                                                            <div className={`px-3 py-2 text-sm font-mono font-bold ${theme.text} bg-white`}>
+                                                                -500 kkal (Fixed)
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -572,5 +686,3 @@
     </script>
 </body>
 </html>
-
-
