@@ -96,21 +96,11 @@
             Weight: (props) => <Icon {...props} path={<><circle cx="12" cy="5" r="3"/><path d="M6.5 8a2 2 0 0 0-1.905 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.5A2 2 0 0 0 17.48 8Z"/></>} />,
             Clock: (props) => <Icon {...props} path={<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>} />,
             Briefcase: (props) => <Icon {...props} path={<><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></>} />,
-            Lock: (props) => <Icon {...props} path={<><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>} />,
-            Unlock: (props) => <Icon {...props} path={<><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></>} />,
-            BookOpen: (props) => <Icon {...props} path={<><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></>} />,
             Settings: (props) => <Icon {...props} path={<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>} />,
             Activity: (props) => <Icon {...props} path={<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>} />,
         };
 
-        // --- PRESETS & CONFIG ---
-        const PRESETS = {
-            rendah_lemak: { gender: 'male', age: '21', weight: '98', height: '167' },
-            dm: { gender: 'female', age: '55', weight: '65', height: '153' },
-            rendah_purin: { gender: 'male', age: '54', weight: '70', height: '160' },
-            gaky: { gender: 'female', age: '45', weight: '50', height: '153' }
-        };
-
+        // --- CONFIG ---
         const THEMES = {
             rendah_lemak: { 
                 name: 'emerald', 
@@ -258,7 +248,6 @@
                 weight: '',
                 bbiVersion: 'v1',
                 dietType: 'rendah_lemak',
-                activitySource: 'edukasi', // 'edukasi' | 'tambahan'
                 activityName: 'Berjalan',
                 activityPct: 20
             });
@@ -266,7 +255,6 @@
             const [showFloating, setShowFloating] = useState(false);
             const inputPanelRef = useRef(null);
 
-            // UPDATED: Rendah Purin macros changed to Protein 10%, Fat 25% (Carbo remains 65% or implied balance)
             const DIET_TYPES = {
                 rendah_lemak: { label: "Rendah Lemak", fullLabel: "Diet Rendah Lemak & Rendah Kalori", macros: { carbo: 65, protein: 15, fat: 20 }, distribution: [25, 10, 30, 10, 25] },
                 dm: { label: "Diabetes (DM)", fullLabel: "Diet Diabetes Melitus", macros: { carbo: 50, protein: 30, fat: 20 }, distribution: [25, 10, 30, 10, 25] },
@@ -280,7 +268,6 @@
             };
 
             const theme = THEMES[input.dietType] || THEMES.rendah_lemak;
-            const isLocked = input.activitySource === 'tambahan';
 
             // --- HANDLERS ---
             const handleActivityChange = (e) => {
@@ -289,23 +276,9 @@
                 setInput({ ...input, activityName: name, activityPct: parseInt(pct) });
             };
 
-            const handleSourceChange = (mode) => {
-                if (mode === 'tambahan') {
-                    const preset = PRESETS[input.dietType];
-                    setInput({ ...input, activitySource: mode, ...preset });
-                } else {
-                    setInput({ ...input, activitySource: mode });
-                }
-            };
-
             const handleDietChange = (e) => {
                 const newDiet = e.target.value;
-                if (input.activitySource === 'tambahan') {
-                    const preset = PRESETS[newDiet];
-                    setInput({ ...input, dietType: newDiet, ...preset });
-                } else {
-                    setInput({ ...input, dietType: newDiet });
-                }
+                setInput({ ...input, dietType: newDiet });
             };
 
             // --- SCROLL DETECTION ---
@@ -350,7 +323,7 @@
                 else if (U >= 70) agePct = 20;
                 const ageVal = (agePct / 100) * kebVal;
 
-                const actPct = input.activitySource === 'tambahan' ? 20 : input.activityPct;
+                const actPct = input.activityPct;
                 const actVal = (actPct / 100) * kebVal;
 
                 const ketPrelim = kebVal + actVal - ageVal;
@@ -398,17 +371,16 @@
                                 <div className="flex flex-col gap-2">
                                     {/* Row 1: Bio Data */}
                                     <div className="flex gap-2 items-center relative">
-                                        {isLocked && <div className="absolute inset-0 bg-white/50 z-10 rounded-xl cursor-not-allowed"></div>}
                                         <div className="flex bg-slate-100 p-1 rounded-xl shrink-0">
-                                            <button disabled={isLocked} onClick={() => setInput({...input, gender: 'male'})} className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${input.gender === 'male' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>L</button>
-                                            <button disabled={isLocked} onClick={() => setInput({...input, gender: 'female'})} className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${input.gender === 'female' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>P</button>
+                                            <button onClick={() => setInput({...input, gender: 'male'})} className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${input.gender === 'male' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>L</button>
+                                            <button onClick={() => setInput({...input, gender: 'female'})} className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${input.gender === 'female' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>P</button>
                                         </div>
-                                        <CompactInput value={input.age} onChange={v => setInput({...input, age: v})} placeholder="Age" suffix="th" disabled={isLocked} theme={theme} />
-                                        <CompactInput value={input.weight} onChange={v => setInput({...input, weight: v})} placeholder="BB" suffix="kg" disabled={isLocked} theme={theme} />
-                                        <CompactInput value={input.height} onChange={v => setInput({...input, height: v})} placeholder="TB" suffix="cm" disabled={isLocked} theme={theme} />
+                                        <CompactInput value={input.age} onChange={v => setInput({...input, age: v})} placeholder="Age" suffix="th" theme={theme} />
+                                        <CompactInput value={input.weight} onChange={v => setInput({...input, weight: v})} placeholder="BB" suffix="kg" theme={theme} />
+                                        <CompactInput value={input.height} onChange={v => setInput({...input, height: v})} placeholder="TB" suffix="cm" theme={theme} />
                                     </div>
                                     
-                                    {/* Row 2: Diet & Activity (With Toggle) */}
+                                    {/* Row 2: Diet & Activity */}
                                     <div className="flex gap-2 h-9">
                                         {/* Diet Select */}
                                         <div className="relative w-[45%]">
@@ -422,42 +394,22 @@
                                             <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400"><Icons.ChevronDown className="w-3 h-3" /></div>
                                         </div>
 
-                                        {/* Activity Control + Mode Toggle */}
-                                        <div className="flex flex-1 gap-2">
-                                            {/* Mode Toggle Button */}
-                                            <button 
-                                                onClick={() => handleSourceChange(input.activitySource === 'edukasi' ? 'tambahan' : 'edukasi')}
-                                                className={`w-9 h-full flex items-center justify-center rounded-xl transition-all border shrink-0 ${input.activitySource === 'tambahan' ? `bg-slate-800 text-white border-slate-800` : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50 hover:text-slate-600'}`}
-                                                title={input.activitySource === 'edukasi' ? "Mode: Hasil Edukasi" : "Mode: Tugas Tambahan"}
+                                        {/* Activity Selector */}
+                                        <div className="relative flex-1 min-w-0">
+                                            <select 
+                                                value={`${input.activityName}|${input.activityPct}`}
+                                                onChange={handleActivityChange}
+                                                className={`w-full h-full text-xs font-bold bg-white border border-slate-200 rounded-xl pl-3 pr-5 cursor-pointer focus:ring-2 focus:ring-${theme.name}-200 text-slate-700 truncate hover:border-slate-300 transition-colors`}
                                             >
-                                                {input.activitySource === 'tambahan' ? <Icons.Lock className="w-4 h-4" /> : <Icons.BookOpen className="w-4 h-4" />}
-                                            </button>
-
-                                            {/* Activity Selector / Static Text */}
-                                            <div className="relative flex-1 min-w-0">
-                                                {input.activitySource === 'tambahan' ? (
-                                                    <div className="w-full h-full text-xs font-bold bg-slate-50 border border-slate-100 rounded-xl px-3 text-slate-400 flex items-center select-none truncate">
-                                                        Tugas (20%)
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        <select 
-                                                            value={`${input.activityName}|${input.activityPct}`}
-                                                            onChange={handleActivityChange}
-                                                            className={`w-full h-full text-xs font-bold bg-white border border-slate-200 rounded-xl pl-3 pr-5 cursor-pointer focus:ring-2 focus:ring-${theme.name}-200 text-slate-700 truncate hover:border-slate-300 transition-colors`}
-                                                        >
-                                                            {ACTIVITY_GROUPS.map((group, idx) => (
-                                                                <optgroup key={idx} label={group.label}>
-                                                                    {group.options.map((opt) => (
-                                                                        <option key={opt.name} value={`${opt.name}|${opt.val}`}>{opt.name} ({opt.val}%)</option>
-                                                                    ))}
-                                                                </optgroup>
-                                                            ))}
-                                                        </select>
-                                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400"><Icons.ChevronDown className="w-3 h-3" /></div>
-                                                    </>
-                                                )}
-                                            </div>
+                                                {ACTIVITY_GROUPS.map((group, idx) => (
+                                                    <optgroup key={idx} label={group.label}>
+                                                        {group.options.map((opt) => (
+                                                            <option key={opt.name} value={`${opt.name}|${opt.val}`}>{opt.name} ({opt.val}%)</option>
+                                                        ))}
+                                                    </optgroup>
+                                                ))}
+                                            </select>
+                                            <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400"><Icons.ChevronDown className="w-3 h-3" /></div>
                                         </div>
                                     </div>
                                 </div>
@@ -470,9 +422,8 @@
                         {/* --- INPUT PANEL --- */}
                         <div className="lg:col-span-4 space-y-6 no-print" ref={inputPanelRef} id="input-panel">
                             
-                            {/* Card 1: Skenario & Diet */}
+                            {/* Card 1: Konfigurasi */}
                             <div className="bg-white rounded-3xl shadow-card border border-slate-100 overflow-hidden relative">
-                                {/* Header */}
                                 <div className={`px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50`}>
                                     <div className="flex items-center gap-2">
                                         <div className={`p-2 rounded-lg ${theme.bg}`}>
@@ -483,23 +434,6 @@
                                 </div>
 
                                 <div className="p-6 space-y-6">
-                                    {/* Mode Selector */}
-                                    <div>
-                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Mode Perhitungan</label>
-                                        <div className="bg-slate-100 p-1.5 rounded-2xl flex relative">
-                                            {/* Animated Background */}
-                                            <div className={`absolute top-1.5 bottom-1.5 rounded-xl bg-white shadow-sm transition-all duration-300 ease-in-out ${input.activitySource === 'edukasi' ? 'left-1.5 w-[calc(50%-6px)]' : 'left-[calc(50%+3px)] w-[calc(50%-6px)]'}`}></div>
-                                            
-                                            <button onClick={() => handleSourceChange('edukasi')} className={`flex-1 relative z-10 py-2.5 text-xs font-bold transition-colors ${input.activitySource === 'edukasi' ? 'text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}>
-                                                Hasil Edukasi
-                                            </button>
-                                            <button onClick={() => handleSourceChange('tambahan')} className={`flex-1 relative z-10 py-2.5 text-xs font-bold transition-colors ${input.activitySource === 'tambahan' ? 'text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}>
-                                                Tugas Tambahan
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Diet Selector */}
                                     <div className="space-y-4">
                                         <div>
                                             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Jenis Diet</label>
@@ -517,56 +451,33 @@
                                             </div>
                                         </div>
 
-                                        {/* Activity Selector */}
-                                        {input.activitySource === 'edukasi' ? (
-                                            <div className="animate-in">
-                                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Aktivitas Fisik</label>
-                                                <div className="relative">
-                                                    <select 
-                                                        value={`${input.activityName}|${input.activityPct}`}
-                                                        onChange={handleActivityChange}
-                                                        className={`w-full appearance-none pl-4 pr-10 py-3.5 rounded-2xl border bg-white font-bold text-sm text-slate-700 outline-none transition-all shadow-sm ${theme.ring} border-slate-200 focus:border-${theme.name}-400 hover:border-slate-300`}
-                                                    >
-                                                        {ACTIVITY_GROUPS.map((group, idx) => (
-                                                            <optgroup key={idx} label={group.label}>
-                                                                {group.options.map((opt) => (
-                                                                    <option key={opt.name} value={`${opt.name}|${opt.val}`}>{opt.name} ({opt.val}%)</option>
-                                                                ))}
-                                                            </optgroup>
-                                                        ))}
-                                                    </select>
-                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                                                        <Icons.ChevronDown className="w-4 h-4" />
-                                                    </div>
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Aktivitas Fisik</label>
+                                            <div className="relative">
+                                                <select 
+                                                    value={`${input.activityName}|${input.activityPct}`}
+                                                    onChange={handleActivityChange}
+                                                    className={`w-full appearance-none pl-4 pr-10 py-3.5 rounded-2xl border bg-white font-bold text-sm text-slate-700 outline-none transition-all shadow-sm ${theme.ring} border-slate-200 focus:border-${theme.name}-400 hover:border-slate-300`}
+                                                >
+                                                    {ACTIVITY_GROUPS.map((group, idx) => (
+                                                        <optgroup key={idx} label={group.label}>
+                                                            {group.options.map((opt) => (
+                                                                <option key={opt.name} value={`${opt.name}|${opt.val}`}>{opt.name} ({opt.val}%)</option>
+                                                            ))}
+                                                        </optgroup>
+                                                    ))}
+                                                </select>
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                                    <Icons.ChevronDown className="w-4 h-4" />
                                                 </div>
                                             </div>
-                                        ) : (
-                                            <div className="animate-in p-4 rounded-2xl bg-slate-50 border border-dashed border-slate-200 flex items-start gap-3">
-                                                <div className="p-2 bg-white rounded-lg shadow-sm text-slate-400">
-                                                    <Icons.Lock className="w-4 h-4" />
-                                                </div>
-                                                <div>
-                                                    <span className="block text-xs font-bold text-slate-700 mb-0.5">Mode Tugas Tambahan</span>
-                                                    <p className="text-[10px] leading-relaxed text-slate-500">
-                                                        Data fisik dan aktivitas (20%) diisi otomatis sesuai standar tugas diet ini.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Card 2: Data Pasien */}
-                            <div className={`bg-white rounded-3xl shadow-card border border-slate-100 overflow-hidden relative transition-all ${isLocked ? 'opacity-80' : ''}`}>
-                                {isLocked && (
-                                    <div className="absolute inset-0 bg-slate-50/60 z-20 backdrop-blur-[1px] flex items-center justify-center cursor-not-allowed group">
-                                        <div className="bg-white/90 text-slate-500 text-xs py-2 px-4 rounded-xl font-bold shadow-soft border border-slate-100 flex items-center gap-2 transform group-hover:scale-105 transition-transform">
-                                            <Icons.Lock className="w-3 h-3" /> Data Terkunci
-                                        </div>
-                                    </div>
-                                )}
-                                
+                            <div className="bg-white rounded-3xl shadow-card border border-slate-100 overflow-hidden relative">
                                 <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                                     <h2 className="font-bold text-sm text-slate-700 tracking-wide">Data Pasien</h2>
                                     <Icons.User className="w-4 h-4 text-slate-400" />
@@ -576,16 +487,16 @@
                                     <div>
                                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Jenis Kelamin</label>
                                         <div className="flex gap-3">
-                                            <button disabled={isLocked} onClick={() => setInput({...input, gender: 'male'})} className={`flex-1 py-3 rounded-xl text-sm font-bold border transition-all ${input.gender === 'male' ? 'bg-slate-800 text-white border-slate-800 shadow-lg shadow-slate-200' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}>Laki-laki</button>
-                                            <button disabled={isLocked} onClick={() => setInput({...input, gender: 'female'})} className={`flex-1 py-3 rounded-xl text-sm font-bold border transition-all ${input.gender === 'female' ? 'bg-slate-800 text-white border-slate-800 shadow-lg shadow-slate-200' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}>Perempuan</button>
+                                            <button onClick={() => setInput({...input, gender: 'male'})} className={`flex-1 py-3 rounded-xl text-sm font-bold border transition-all ${input.gender === 'male' ? 'bg-slate-800 text-white border-slate-800 shadow-lg shadow-slate-200' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}>Laki-laki</button>
+                                            <button onClick={() => setInput({...input, gender: 'female'})} className={`flex-1 py-3 rounded-xl text-sm font-bold border transition-all ${input.gender === 'female' ? 'bg-slate-800 text-white border-slate-800 shadow-lg shadow-slate-200' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}>Perempuan</button>
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
-                                        <InputGroup label="Usia" suffix="Thn" value={input.age} onChange={v => setInput({...input, age: v})} theme={theme} disabled={isLocked} icon={Icons.Clock} />
-                                        <InputGroup label="Berat" suffix="kg" value={input.weight} onChange={v => setInput({...input, weight: v})} theme={theme} disabled={isLocked} icon={Icons.Weight} />
+                                        <InputGroup label="Usia" suffix="Thn" value={input.age} onChange={v => setInput({...input, age: v})} theme={theme} icon={Icons.Clock} />
+                                        <InputGroup label="Berat" suffix="kg" value={input.weight} onChange={v => setInput({...input, weight: v})} theme={theme} icon={Icons.Weight} />
                                     </div>
-                                    <InputGroup label="Tinggi Badan" suffix="cm" value={input.height} onChange={v => setInput({...input, height: v})} theme={theme} disabled={isLocked} icon={Icons.Ruler} />
+                                    <InputGroup label="Tinggi Badan" suffix="cm" value={input.height} onChange={v => setInput({...input, height: v})} theme={theme} icon={Icons.Ruler} />
                                 </div>
                             </div>
 
@@ -600,7 +511,7 @@
                                             <h1 className="text-3xl font-serif font-bold text-slate-900 mb-2">HASIL ANALISA GIZI</h1>
                                             <div className="flex items-center gap-2">
                                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-200 text-slate-500`}>
-                                                    {input.activitySource === 'tambahan' ? 'Tugas Tambahan' : 'Hasil Edukasi'}
+                                                    Hasil Edukasi
                                                 </span>
                                                 <p className={`font-serif ${theme.accent} italic text-sm`}>Laporan Klinis & Perhitungan Kebutuhan</p>
                                             </div>
@@ -630,11 +541,6 @@
                                                             <span className={`text-[10px] font-bold ${theme.accent} uppercase tracking-widest block mb-1 opacity-80`}>Diet Prescribed</span>
                                                             <span className={`text-xl font-bold ${theme.text}`}>{DIET_TYPES[input.dietType].fullLabel}</span>
                                                         </div>
-                                                        {input.activitySource === 'tambahan' && (
-                                                            <div className="bg-white/60 px-3 py-1 rounded-lg text-xs font-bold text-slate-500 border border-white/50 shadow-sm flex items-center gap-1">
-                                                                <Icons.Lock className="w-3 h-3" /> Preset Otomatis
-                                                            </div>
-                                                        )}
                                                     </div>
                                                     
                                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -697,7 +603,7 @@
 
                                                 <div className="mt-4 text-sm pl-0">
                                                     <div className="text-slate-400 italic mb-2 text-xs uppercase font-bold tracking-wider">Batas Adekuat KET (+/- 10%)</div>
-                                                    <div className={`font-mono text-slate-600 pl-4 border-l-2 ${theme.border} space-y-1`}>
+                                                    <div className={`font-mono text-slate-600 pl-4 border-l-2 ${theme.border} space-y-1 overflow-x-auto`}>
                                                         <div className="">= {fmt(result.ket.val, 2)} + (10% x {fmt(result.ket.val, 2)}) = <span className={`font-bold ${theme.accent}`}>{fmt(result.ket.max, 2)} kkal (Max)</span></div>
                                                         <div className="">= {fmt(result.ket.val, 2)} - (10% x {fmt(result.ket.val, 2)}) = <span className={`font-bold ${theme.accent}`}>{fmt(result.ket.min, 2)} kkal (Min)</span></div>
                                                     </div>
@@ -718,7 +624,7 @@
                                                             
                                                             <div className="mt-3 text-sm">
                                                                 <div className="text-slate-400 italic mb-1 text-[10px] uppercase font-bold">Batas Adekuat {m.label} (+/- 10%)</div>
-                                                                <div className={`font-mono text-slate-600 pl-4 border-l-2 ${theme.border} text-xs sm:text-sm space-y-1`}>
+                                                                <div className={`font-mono text-slate-600 pl-4 border-l-2 ${theme.border} text-xs sm:text-sm space-y-1 overflow-x-auto`}>
                                                                     <div className="">= {fmt(m.gram, 1)} + (10% x {fmt(m.gram, 1)}) = <span className={`font-bold ${theme.accent}`}>{fmt(m.maxGram, 1)} gr (Max)</span></div>
                                                                     <div className="">= {fmt(m.gram, 1)} - (10% x {fmt(m.gram, 1)}) = <span className={`font-bold ${theme.accent}`}>{fmt(m.minGram, 1)} gr (Min)</span></div>
                                                                 </div>
@@ -777,7 +683,7 @@
                                                             <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
                                                                 <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Aktivitas</div>
                                                                 <div className={`font-mono text-sm font-bold ${theme.text}`}>
-                                                                    {input.activitySource === 'tambahan' ? '20% (Fix)' : `${input.activityPct}%`}
+                                                                    {input.activityPct}%
                                                                 </div>
                                                             </div>
                                                             <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
