@@ -96,6 +96,7 @@
             Weight: (props) => <Icon {...props} path={<><circle cx="12" cy="5" r="3"/><path d="M6.5 8a2 2 0 0 0-1.905 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.5A2 2 0 0 0 17.48 8Z"/></>} />,
             Clock: (props) => <Icon {...props} path={<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>} />,
             Settings: (props) => <Icon {...props} path={<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>} />,
+            Activity: (props) => <Icon {...props} path={<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>} />,
         };
 
         // --- CONFIG ---
@@ -158,7 +159,8 @@
 
         // --- SUB-COMPONENTS ---
         const MathLine = ({ label, formula, isResult, resultUnit, theme, smallText }) => (
-            <div className={`grid grid-cols-[60px_20px_1fr] gap-y-1 font-mono ${smallText ? 'text-xs sm:text-sm' : 'text-sm sm:text-lg'} text-slate-700 leading-snug`}>
+            // Updated font sizes: text-[10px] for mobile, sm:text-base for desktop
+            <div className={`grid grid-cols-[60px_20px_1fr] gap-y-1 font-mono ${smallText ? 'text-[10px] sm:text-sm' : 'text-xs sm:text-base'} text-slate-700 leading-snug`}>
                 <div className="font-semibold whitespace-nowrap opacity-80">{label || ''}</div>
                 <div className="text-center opacity-60">=</div>
                 <div>
@@ -179,7 +181,7 @@
                     <h3 className={`font-bold text-lg sm:text-xl text-slate-900 underline ${theme.decor} decoration-2 underline-offset-4`}>{title}</h3>
                     {rightElement}
                 </div>
-                <div className="pl-2 sm:pl-4">
+                <div className="pl-1 sm:pl-4">
                     {children}
                 </div>
             </div>
@@ -598,8 +600,8 @@
                                                 <div className="mt-4 text-sm pl-0">
                                                     <div className="text-slate-400 italic mb-2 text-xs uppercase font-bold tracking-wider">Batas Adekuat KET (+/- 10%)</div>
                                                     <div className={`font-mono text-slate-600 pl-4 border-l-2 ${theme.border} space-y-1 overflow-x-auto`}>
-                                                        <div className="">= {fmt(result.ket.val, 2)} + (10% x {fmt(result.ket.val, 2)}) = <span className={`font-bold ${theme.accent}`}>{fmt(result.ket.max, 2)} kkal (Max)</span></div>
-                                                        <div className="">= {fmt(result.ket.val, 2)} - (10% x {fmt(result.ket.val, 2)}) = <span className={`font-bold ${theme.accent}`}>{fmt(result.ket.min, 2)} kkal (Min)</span></div>
+                                                        <div className="text-[10px] sm:text-xs">= {fmt(result.ket.val, 2)} + (10% x {fmt(result.ket.val, 2)}) = <span className={`font-bold ${theme.accent}`}>{fmt(result.ket.max, 2)} kkal (Max)</span></div>
+                                                        <div className="text-[10px] sm:text-xs">= {fmt(result.ket.val, 2)} - (10% x {fmt(result.ket.val, 2)}) = <span className={`font-bold ${theme.accent}`}>{fmt(result.ket.min, 2)} kkal (Min)</span></div>
                                                     </div>
                                                 </div>
                                             </Section>
@@ -619,8 +621,8 @@
                                                             <div className="mt-3 text-sm">
                                                                 <div className="text-slate-400 italic mb-1 text-[10px] uppercase font-bold">Batas Adekuat {m.label} (+/- 10%)</div>
                                                                 <div className={`font-mono text-slate-600 pl-4 border-l-2 ${theme.border} text-xs sm:text-sm space-y-1 overflow-x-auto`}>
-                                                                    <div className="">= {fmt(m.gram, 1)} + (10% x {fmt(m.gram, 1)}) = <span className={`font-bold ${theme.accent}`}>{fmt(m.maxGram, 1)} gr (Max)</span></div>
-                                                                    <div className="">= {fmt(m.gram, 1)} - (10% x {fmt(m.gram, 1)}) = <span className={`font-bold ${theme.accent}`}>{fmt(m.minGram, 1)} gr (Min)</span></div>
+                                                                    <div className="text-[10px] sm:text-xs">= {fmt(m.gram, 1)} + (10% x {fmt(m.gram, 1)}) = <span className={`font-bold ${theme.accent}`}>{fmt(m.maxGram, 1)} gr (Max)</span></div>
+                                                                    <div className="text-[10px] sm:text-xs">= {fmt(m.gram, 1)} - (10% x {fmt(m.gram, 1)}) = <span className={`font-bold ${theme.accent}`}>{fmt(m.minGram, 1)} gr (Min)</span></div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -631,12 +633,12 @@
                                             <Section title="6) Planning (Menu Sehari)" theme={theme}>
                                                 <div className="grid gap-4">
                                                     {result.mealPlan.map((meal, idx) => (
-                                                        <div key={idx} className="flex flex-col sm:flex-row sm:items-baseline gap-2 pb-3 border-b border-dashed border-slate-200 last:border-0 hover:bg-slate-50 px-2 rounded transition-colors">
-                                                            <div className="w-40 font-bold text-slate-700 text-sm uppercase tracking-wide flex items-center gap-2">
+                                                        <div key={idx} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 pb-3 border-b border-dashed border-slate-200 last:border-0 hover:bg-slate-50 px-2 rounded transition-colors">
+                                                            <div className="w-40 font-bold text-slate-700 text-sm uppercase tracking-wide flex items-center gap-2 shrink-0">
                                                                 <span className="text-slate-300 text-[10px]">0{idx+1}</span> {meal.name}
                                                             </div>
-                                                            <div className="flex-1 font-mono text-slate-500 text-sm">
-                                                                <span className="opacity-50">{meal.pct}% x {fmt(result.ket.val, 0)} =</span> <span className={`font-bold ${theme.accent} ml-2`}>{fmt(meal.cal, 1)} kkal</span>
+                                                            <div className="flex-1 font-mono text-slate-500 text-[10px] sm:text-xs overflow-x-auto whitespace-nowrap no-scrollbar">
+                                                                {meal.pct}% x KET = {meal.pct}% x {fmt(result.ket.val, 2)} = <span className={`font-bold ${theme.accent} ml-1`}>{fmt(meal.cal, 1)} kkal</span>
                                                             </div>
                                                         </div>
                                                     ))}
